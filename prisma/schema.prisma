@@ -1,0 +1,21 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./db.db"
+}
+
+model Message {
+  id          Int    @id @default(autoincrement())
+  ms          Int
+  content     String
+  authorId    Int
+  recipientId Int
+  author      User   @relation("MessageAuthor", fields: [authorId], references: [id])
+  recipient   User   @relation("MessageRecipient", fields: [recipientId], references: [id])
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  pubKey           String
+  SentMessages     Message[] @relation("MessageAuthor")
+  ReceivedMessages Message[] @relation("MessageRecipient")
+}
