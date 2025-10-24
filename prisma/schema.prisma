@@ -3,19 +3,30 @@ datasource db {
   url      = "file:./db.db"
 }
 
-model Message {
-  id          Int    @id @default(autoincrement())
-  ms          Int
-  content     String
-  authorId    Int
-  recipientId Int
-  author      User   @relation("MessageAuthor", fields: [authorId], references: [id])
-  recipient   User   @relation("MessageRecipient", fields: [recipientId], references: [id])
+generator client {
+  provider = "prisma-client-js"
 }
 
-model User {
-  id               Int       @id @default(autoincrement())
-  pubKey           String
-  SentMessages     Message[] @relation("MessageAuthor")
-  ReceivedMessages Message[] @relation("MessageRecipient")
+model Post {
+  createdSec  BigInt
+  authorId    Int
+  content     String
+  public      Boolean
+  recipientId Int
+  author      PowIdentity @relation("Author", fields: [authorId], references: [id])
+  recipient   PowIdentity @relation("Recipient", fields: [recipientId], references: [id])
+
+  @@id([createdSec, authorId])
+}
+
+model PowIdentity {
+  id          Int           @id @default(autoincrement())
+  createdSec  BigInt
+  lastQueryMs BigInt
+  identity    String        @unique
+  parentId    Int?
+  Authored    Post[]        @relation("Author")
+  Received    Post[]        @relation("Recipient")
+  parent      PowIdentity?  @relation("Parent", fields: [parentId], references: [id])
+  children    PowIdentity[] @relation("Parent")
 }

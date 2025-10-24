@@ -1,118 +1,146 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { GenerateToken, VerifyToken } from './challenge';
+import * as Challenge from './challenge';
+import * as HTML from './html';
 
-//https://www.npmjs.com/package/tweetnacl
-//https://tweetnacl.js.org/#/box
+const numLeadingZeroBitsTarget = 12;
+const sec = () => Math.floor(Date.now() / 1_000);
 
 const prisma = new PrismaClient();
 const app = express();
-
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.method === 'POST' && !req.is('application/json')) {
+    req.headers['content-type'] = 'application/json';
+  }
+  next();
+});
+app.use(express.json({ limit: '1kb' }));
 
 app.get('/', async (req, res) => {
   res.contentType('html');
   res.end(`
 <p>Welcome to TTYT, a simple chatting platform for developers.</p>
-<p>Visit <a href="/token"><code>/token</code></a> for instructions on generating a valid keypair for yourself.</p>
+<ul>
+  <li>Visit <a href="/verify"><code>/verify</code></a> for instructions on generating a valid keypair for yourself.</li>
+  <li>Visit <a href="/mint"><code>/mint</code></a> for instructions on minting arbitrary recipients.</li>
+  <li>Visit <a href="/recipients"><code>/recipients</code></a> to list & search recipients.</li>
+  <li>Visit <a href="/posts"><code>/posts</code></a> to list & search posts.</li>
+</ul>
 `);
 });
 
-app.get('/token', async (req, res) => {
-  const token = GenerateToken();
+app.get('/verify', async (req, res) => {
+  const token = Challenge.ThisMinuteToken();
   const short = token.slice(0, 8) + '...';
-  //TODO: decide if encryption public key is imposed or PoW identity can choose to use any whenever they wish
-  const help = `Generate an Ed25519 public key such that <code>sign("${short}")</code> has 24 leading zero bits.
-Once you have done that, generate yourself a X25519-XSalsa20-Poly1305 keypair for encrypted messaging.
-Then POST to <code>/verify</code>:
+  res.contentType('html');
+  res.end(`
+<p>Generate an Ed25519 public key such that <code>sign("${short}")</code> has ${numLeadingZeroBitsTarget} leading zero bits.</p>
+<p>Then POST to <code>/verify</code>:</p>
 <pre>
 {
-  "signature_public_key": "&lt;hex encoded Ed25519 public key&gt;",
-  "encryption_public_key": "&lt;hex encoded X25519 public key&gt;",
-  "signature": "&lt;hex encoded signature of ${short}&gt;",
-  "token": "${token}"
+  "key": "&lt;hex encoded Ed25519 public key&gt;",
+  "sig": "&lt;hex encoded signature of ${short}&gt;",
+  "tok": "${token}"
 }
 </pre>
-`;
-  res.contentType('html');
-  res.end(help);
+<p><code>key</code> will be stored as your identity on TTYT if the proof is valid.</p>
+`);
 });
 
 app.post('/verify', async (req, res) => {
-  //Check body is valid
   const { key, sig, tok } = req.body;
   if (!key || !sig || !tok)
+    return res.status(400).end('Invalid request body; GET /verify for help');
+  const tokenStatus = Challenge.VerifyToken(tok);
+  if (tokenStatus !== 'valid')
+    return res.status(400).end(`Token ${tokenStatus}`);
+
+  const sigStatus = await Challenge.CheckEd25519Signature(key, tok, sig);
+  if (typeof sigStatus === 'string') return res.status(400).end(sigStatus);
+  if (!sigStatus) return res.status(400).end('Invalid signature');
+
+  const numLeadingZeroBits = Challenge.CountLeadingZeroBits(sig);
+  if (numLeadingZeroBits < numLeadingZeroBitsTarget)
     return res
       .status(400)
-      .json({ error: 'Invalid request body; GET /token for help' });
-  if (!VerifyToken(tok))
-    return res.status(400).json({ error: 'Invalid token' });
-});
+      .end(
+        `Insufficient leading zero bits: got ${numLeadingZeroBits}, need ${numLeadingZeroBitsTarget}`,
+      );
 
-/*
-When the client submits their public key and nonce, your server should:
-
-    Verify the HMAC of the token.
-
-    Recompute the hash and check the leading zero bits.
-
-    If valid, store the public key in your database of "verified" keys.*/
-
-// GET all users
-app.get('/users', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
-      include: { posts: true },
+    await prisma.powIdentity.create({
+      data: { createdSec: sec(), identity: key, lastQueryMs: Date.now() },
     });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching users' });
+    res.end(`Welcome to TTYT, ${key}.`);
+  } catch {
+    return res
+      .status(500)
+      .end('Database error; perhaps this key already exists?');
   }
 });
 
-// POST create user
-app.post('/users', async (req, res) => {
+app.get('/mint', (req, res) => {
+  const token = Challenge.ThisMinuteToken();
+  const short = token.slice(0, 8) + '...';
+  res.contentType('html');
+  res.end(`
+<p>Generate an Ed25519 public key such that <code>sign("${short}")</code> has ${numLeadingZeroBitsTarget} leading zero bits.</p>
+<p>Then POST to <code>/mint</code>:</p>
+<pre>
+{
+  "str": "&lt;the 1-64 byte Unicode recipient you want to mint&gt;",
+  "key": "&lt;hex encoded Ed25519 public key&gt;",
+  "sig": "&lt;hex encoded signature of ${short}&gt;",
+  "tok": "${token}"
+}
+</pre>
+`);
+});
+
+app.post('/mint', async (req, res) => {
+  const { str, key, sig, tok } = req.body;
+  if (!str || !key || !sig || !tok)
+    return res.status(400).end('Invalid request body; GET /mint for help');
+  const tokenStatus = Challenge.VerifyToken(tok);
+  if (tokenStatus !== 'valid')
+    return res.status(400).end(`Token ${tokenStatus}`);
+  //TODO...
+});
+
+app.get('/recipients', async (req, res) => {
   try {
-    const { name, email } = req.body;
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
+    const recipients = await prisma.powIdentity.findMany({
+      include: {
+        _count: { select: { Received: { where: { public: true } } } },
+        parent: { select: { identity: true } },
       },
     });
-    res.status(201).json(user);
+    const table = HTML.tabulate(
+      recipients.map(r => ({
+        identity: r.identity,
+        'created sec': `${r.createdSec}`,
+        parent: r.parent?.identity ?? '--',
+        'public post count': r._count.Received,
+      })),
+    );
+    res.contentType('html');
+    res.end(table);
   } catch (error) {
-    res.status(400).json({ error: 'Error creating user' });
+    console.error('Error fetching recipients:', error);
+    res.status(500).end('Error fetching recipients');
   }
 });
 
-// GET all posts
 app.get('/posts', async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { author: true },
+      where: { public: true },
+      include: { author: { select: { identity: true } } },
     });
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching posts' });
-  }
-});
-
-// POST create post
-app.post('/posts', async (req, res) => {
-  try {
-    const { title, content, authorId } = req.body;
-    const post = await prisma.post.create({
-      data: {
-        title,
-        content,
-        authorId,
-      },
-      include: { author: true },
-    });
-    res.status(201).json(post);
-  } catch (error) {
-    res.status(400).json({ error: 'Error creating post' });
+    console.error('Error fetching posts:', error);
+    res.status(500).end('Error fetching posts');
   }
 });
 
