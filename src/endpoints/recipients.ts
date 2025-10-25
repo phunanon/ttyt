@@ -11,10 +11,12 @@ app.get('/recipients', async (req, res) => {
     });
     const table = HTML.tabulate(
       recipients.map(r => ({
-        identity: r.identity,
-        'created sec': `${r.createdSec}`,
-        parent: r.parent?.identity ?? '--',
-        'public post count': r._count.Received,
+        identity: { text: r.identity, truncate: false },
+        'created sec': { text: `${r.createdSec}`, truncate: false },
+        parent: r.parent
+          ? { text: r.parent.identity, truncate: true }
+          : undefined,
+        'public post count': { text: `${r._count.Received}`, truncate: false },
       })),
     );
     res.contentType('html');
@@ -22,18 +24,5 @@ app.get('/recipients', async (req, res) => {
   } catch (error) {
     console.error('Error fetching recipients:', error);
     res.status(500).end('Error fetching recipients');
-  }
-});
-
-app.get('/posts', async (req, res) => {
-  try {
-    const posts = await prisma.post.findMany({
-      where: { public: true },
-      include: { author: { select: { identity: true } } },
-    });
-    res.json(posts);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    res.status(500).end('Error fetching posts');
   }
 });

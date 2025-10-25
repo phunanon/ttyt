@@ -37,7 +37,7 @@ export async function CheckEd25519Signature(
   publicKeyHex: string,
   message: string,
   signatureHex: string,
-): Promise<boolean | string> {
+) {
   try {
     const publicKeyRaw = Buffer.from(publicKeyHex, 'hex');
     const signature = Buffer.from(signatureHex, 'hex');
@@ -49,15 +49,15 @@ export async function CheckEd25519Signature(
       false,
       ['verify'],
     );
-    const valid = await subtle.verify(
+    const sig_valid = await subtle.verify(
       { name: 'Ed25519' },
       publicKey,
       signature,
       messageUint8,
     );
-    return valid;
-  } catch (e) {
-    return `${e}`;
+    return { sig_valid };
+  } catch (sig_error) {
+    return { sig_error };
   }
 }
 

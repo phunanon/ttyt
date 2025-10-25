@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Post reference implementation</title>
+    <script src="/public/post.js"></script>
+    <style>
+      .row {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Use this reference implementation to post signed content to the
+      <a href="/post">/post</a> endpoint.
+    </p>
+    <form id="post-form" class="row">
+      <fieldset id="post-fieldset" class="col">
+        <input name="private-key" placeholder="private key (pkcs8, hex)" />
+        <input placeholder="content" />
+        <input placeholder="recipient" />
+        <span>
+          <input type="checkbox" name="public" value="public" />
+          <label for="public-checkbox">public</label>
+        </span>
+        <button type="button" onclick="Post()">Post</button>
+      </fieldset>
+      <pre id="response"></pre>
+    </form>
+  </body>
+</html>

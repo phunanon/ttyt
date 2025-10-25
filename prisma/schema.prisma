@@ -11,6 +11,7 @@ model Post {
   createdSec  BigInt
   authorId    Int
   content     String
+  signature   String
   public      Boolean
   recipientId Int
   author      PowIdentity @relation("Author", fields: [authorId], references: [id])

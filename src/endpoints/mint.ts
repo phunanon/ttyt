@@ -26,6 +26,5 @@ app.post('/mint', async (req, res) => {
   if (!str || !key || !sig || !tok)
     return res.status(400).end('Invalid request body; GET /mint for help');
 
-  if (!Challenge(res, key, sig, tok)) return;
+  if (!Challenge({ res, key, sig, tok })) return;
 });
-

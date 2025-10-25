@@ -26,7 +26,7 @@ app.post('/register', async (req, res) => {
   if (!key || !sig || !tok)
     return res.status(400).end('Invalid request body; GET /register for help');
 
-  if (!await Challenge(res, key, sig, tok)) return;
+  if (!(await Challenge({ res, key, sig, tok }))) return;
 
   try {
     await prisma.powIdentity.create({
@@ -39,4 +39,3 @@ app.post('/register', async (req, res) => {
       .end('Database error; perhaps this key already exists?');
   }
 });
-
