@@ -30,18 +30,28 @@
       </fieldset>
       <pre id="status"></pre>
     </form>
-    <form id="proof-form" class="row">
-      <fieldset id="proof-fieldset" class="col" disabled>
-        <input name="tok" placeholder="tok" readonly />
+    <form id="register-form" class="row">
+      <fieldset id="register-fieldset" class="col" disabled>
         <input name="key" placeholder="key" readonly />
+        <input name="tok" placeholder="tok" readonly />
         <input name="sig" placeholder="sig" readonly />
-        <input name="str" placeholder="str (only use for /mint)" />
-        <button type="button" onclick="PostProof('/register')">
+        <button type="button" onclick="PostProof('/register', 'register-form')">
           POST /register
         </button>
-        <button type="button" onclick="PostProof('/mint')">POST /mint</button>
       </fieldset>
       <pre id="private-key"></pre>
+    </form>
+    <form id="mint-form" class="row">
+      <fieldset id="mint-fieldset" class="col" disabled>
+        <input name="own" placeholder="owner identity" />
+        <input name="key" placeholder="key" readonly />
+        <input name="tok" placeholder="tok" readonly />
+        <input name="sig" placeholder="sig" readonly />
+        <input name="str" placeholder="str" />
+        <button type="button" onclick="PostProof('/mint', 'mint-form')">
+          POST /mint
+        </button>
+      </fieldset>
     </form>
     <pre id="response"></pre>
   </body>

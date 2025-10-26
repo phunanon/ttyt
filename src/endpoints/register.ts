@@ -3,7 +3,9 @@ import { Challenge } from '../challenge';
 import * as Crypto from '../crypto';
 
 app.get('/register', async (req, res) => {
-  const token = Crypto.ThisMinuteToken();
+  if (!req.ip) return res.status(400).end('IP address not visible');
+
+  const token = Crypto.GenerateToken(req.ip);
   const short = token.slice(0, 8) + '...';
   res.contentType('html');
   res.end(`
@@ -23,14 +25,18 @@ app.get('/register', async (req, res) => {
 
 app.post('/register', async (req, res) => {
   const { key, sig, tok } = req.body;
-  if (!key || !sig || !tok)
+  if (
+    typeof key !== 'string' ||
+    typeof sig !== 'string' ||
+    typeof tok !== 'string'
+  )
     return res.status(400).end('Invalid request body; GET /register for help');
 
-  if (!(await Challenge({ res, key, sig, tok }))) return;
+  if (!(await Challenge({ req, res, key, sig, tok }))) return;
 
   try {
     await prisma.powIdentity.create({
-      data: { createdSec: sec(), identity: key, lastQueryMs: Date.now() },
+      data: { createdSec: sec(), identity: key.toLowerCase() },
     });
     res.end(`Welcome to TTYT, ${key}.`);
   } catch {

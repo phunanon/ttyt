@@ -1,4 +1,5 @@
-type Row = Record<string, { text: string; truncate: boolean } | undefined>;
+type Cell = { text: string; href?: string; truncate?: true };
+type Row = Record<string, Cell | undefined>;
 export const tabulate = (rows: Row[]): string => {
   if (rows.length === 0) return '<p>No data</p>';
   const headers = [...new Set(rows.flatMap(row => Object.keys(row)))];
@@ -10,10 +11,14 @@ export const tabulate = (rows: Row[]): string => {
         .map(h => {
           const cell = row[h];
           if (!cell) return '<td>--</td>';
-          const { text, truncate } = cell;
+          const { text, href, truncate } = cell;
+          const tooLong = truncate && text.length > 8;
           const truncated =
-            truncate && text.length > 8 ? text.slice(0, 8) + '...' : text;
-          return `<td title="${text}"><code>${truncated}</code></td>`;
+            tooLong ? text.slice(0, 8) + '...' : text;
+          const inner = `<code>${truncated}</code>`;
+          const link = href ? `<a href="${href}">${inner}</a>` : inner;
+          const title = tooLong ? ` title="${text}"` : '';
+          return `<td${title}>${link}</td>`;
         })
         .join('');
       return `<tr>${cols}</tr>`;

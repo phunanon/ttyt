@@ -8,7 +8,7 @@ generator client {
 }
 
 model Post {
-  createdSec  BigInt
+  createdSec  Int
   authorId    Int
   content     String
   signature   String
@@ -21,13 +21,12 @@ model Post {
 }
 
 model PowIdentity {
-  id          Int           @id @default(autoincrement())
-  createdSec  BigInt
-  lastQueryMs BigInt
-  identity    String        @unique
-  parentId    Int?
-  Authored    Post[]        @relation("Author")
-  Received    Post[]        @relation("Recipient")
-  parent      PowIdentity?  @relation("Parent", fields: [parentId], references: [id])
-  children    PowIdentity[] @relation("Parent")
+  id         Int           @id @default(autoincrement())
+  createdSec Int
+  identity   String        @unique
+  ownerId    Int?
+  Authored   Post[]        @relation("Author")
+  Received   Post[]        @relation("Recipient")
+  owner      PowIdentity?  @relation("Owner", fields: [ownerId], references: [id])
+  assets     PowIdentity[] @relation("Owner")
 }

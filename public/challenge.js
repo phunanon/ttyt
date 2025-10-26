@@ -23,7 +23,7 @@ const workerCode = (tok, zeroes) => `
         encoded
       );
       iterations++;
-      if (iterations % 1000 === 0) {
+      if (iterations % 500 === 0) {
         self.postMessage({ iterations });
         iterations = 0;
       }
@@ -89,21 +89,29 @@ Speed:             ${speed.toLocaleString()} iterations/s`;
         const { pkcs8, publicKey, signature } = e.data;
         const toHex = arr =>
           arr.map(b => b.toString(16).padStart(2, '0')).join('');
-        const proofForm = q(document, '#proof-form');
-        q(proofForm, '[name="tok"]').value = tok;
-        q(proofForm, '[name="key"]').value = toHex(publicKey);
-        q(proofForm, '[name="sig"]').value = toHex(signature);
-        q(document, '#proof-fieldset').disabled = false;
+        const registerForm = q(document, '#register-form');
+        const mintForm = q(document, '#mint-form');
+        q(registerForm, '[name="tok"]').value = tok;
+        q(registerForm, '[name="key"]').value = toHex(publicKey);
+        q(registerForm, '[name="sig"]').value = toHex(signature);
+        q(mintForm, '[name="tok"]').value = tok;
+        q(mintForm, '[name="key"]').value = toHex(publicKey);
+        q(mintForm, '[name="sig"]').value = toHex(signature);
+        q(document, '#register-fieldset').disabled = false;
+        q(document, '#mint-fieldset').disabled = false;
         const privateKeyDisplay = q(document, '#private-key');
-        privateKeyDisplay.textContent = `Private key, in PKCS8 format:
-${toHex(pkcs8)}`;
+        privateKeyDisplay.textContent = `Private key, in hexadecimal PKCS8 format:
+${toHex(pkcs8)}
+
+Public key, in hexadecimal raw format:
+${toHex(publicKey)}`;
       }
     };
   }
 }
 
-async function PostProof(endpoint) {
-  const form = q(document, '#proof-form');
+async function PostProof(endpoint, id) {
+  const form = q(document, `#${id}`);
   const formData = new FormData(form);
   const body = JSON.stringify(Object.fromEntries(formData));
   const response = await fetch(endpoint, {

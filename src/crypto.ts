@@ -1,28 +1,37 @@
 import crypto from 'crypto';
 import { subtle } from 'crypto';
 
-const TTL = 5 * 60_000; //5 minutes
+export const tokenTtlSec = 300;
 export const numLeadingZeroBitsTarget = 12;
 const secret256bit = crypto.randomBytes(32).toString('hex');
-const tokenCache = { token: '', ttl: 0 };
+type TokenCacheEntry = { token: string; sec: number; ttl: number };
+const ipTokenCache = new Map<string, TokenCacheEntry>();
 
-export const ThisMinuteToken = () => {
-  if (Date.now() <= tokenCache.ttl) return tokenCache.token;
+export const GenerateToken = (ip: string) => {
+  const sec = Math.floor(Date.now() / 1_000);
+  for (const [key, value] of ipTokenCache.entries())
+    if (sec > value.sec) ipTokenCache.delete(key);
+
+  const existing = ipTokenCache.get(ip);
+  if (existing) return existing.token;
+
   const server_nonce = crypto.randomBytes(16).toString('hex');
-  const ttl = Date.now() + TTL;
+  const ttl = sec + tokenTtlSec;
   const hmac = crypto.createHmac('sha256', secret256bit);
   hmac.update(server_nonce + ttl);
   const hmac_hex = hmac.digest('hex');
-  tokenCache.token = `${server_nonce}:${ttl}:${hmac_hex}`;
-  tokenCache.ttl = Date.now() + 60_000;
-  return tokenCache.token;
+  const entry = { token: `${server_nonce}_${ttl}_${ip}_${hmac_hex}`, sec, ttl };
+  ipTokenCache.set(ip, entry);
+  return entry.token;
 };
 
-export const VerifyToken = (token: string) => {
-  const [server_nonce, ttl_str, hmac_hex] = token.split(':');
+export const VerifyToken = (ip: string, token: string) => {
+  const [server_nonce, ttl_str, tok_ip, hmac_hex] = token.split('_');
   if (!server_nonce || !ttl_str || !hmac_hex) return 'malformed';
   const ttl = parseInt(ttl_str);
-  if (isNaN(ttl) || Date.now() > ttl) return 'expired';
+  const sec = Math.floor(Date.now() / 1_000);
+  if (isNaN(ttl) || sec > ttl) return 'expired';
+  if (tok_ip !== ip) return 'wrong IP';
   const hmac = crypto.createHmac('sha256', secret256bit);
   hmac.update(server_nonce + ttl);
   const expected_hmac_hex = hmac.digest('hex');

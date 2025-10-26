@@ -31,17 +31,20 @@ app.post('/post', async (req, res) => {
 
   const [authorPoW, recipientPoW] = await Promise.all([
     prisma.powIdentity.findUnique({ where: { identity: key.toLowerCase() } }),
-    prisma.powIdentity.findUnique({
-      where: { identity: recipient.toLowerCase() },
-    }),
+    prisma.powIdentity.findUnique({ where: { identity: recipient } }),
   ]);
   if (!authorPoW) return res.status(400).end('key not found');
   if (!recipientPoW) return res.status(400).end('recipient not found');
 
   try {
+    const createdSec = sec();
+    const alreadyPosted = await prisma.post.findFirst({
+      where: { createdSec },
+    });
+    if (alreadyPosted) return res.status(400).end('Rate limit exceeded');
     await prisma.post.create({
       data: {
-        createdSec: sec(),
+        createdSec,
         authorId: authorPoW.id,
         recipientId: recipientPoW.id,
         content,
