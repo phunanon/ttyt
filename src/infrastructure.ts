@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import express from "express";
+import { PrismaClient } from '@prisma/client';
+import express from 'express';
 
 export const prisma = new PrismaClient();
 export const app = express();
@@ -14,6 +14,7 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '1kb' }));
 
 app.use('/public', express.static('public'));
+app.use('/App', express.static('public/App.html'));
 
 const PORT = process.env.PORT || 3000;
 

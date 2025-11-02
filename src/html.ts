@@ -13,8 +13,7 @@ export const tabulate = (rows: Row[]): string => {
           if (!cell) return '<td>--</td>';
           const { text, href, truncate } = cell;
           const tooLong = truncate && text.length > 8;
-          const truncated =
-            tooLong ? text.slice(0, 8) + '...' : text;
+          const truncated = tooLong ? text.slice(0, 8) + '...' : text;
           const inner = `<code>${truncated}</code>`;
           const link = href ? `<a href="${href}">${inner}</a>` : inner;
           const title = tooLong ? ` title="${text}"` : '';

@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My App</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-size: 1.1rem;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #000;
+        color: #eee;
+      }
+      navbar {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+      }
+      history {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 1rem;
+      }
+      composer {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        & textarea {
+          flex: 1 1 auto;
+          resize: none;
+          background-color: #000;
+          color: #eee;
+        }
+      }
+      message {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        white-space: pre-wrap;
+        background-color: rgba(255, 255, 255, 0.25);
+        padding: 0.1rem 0.5rem;
+        & content {
+          flex: 1 1 auto;
+        }
+        & between {
+          display: flex;
+          flex-direction: row;
+          gap: 0.5rem;
+          font-family: monospace;
+          & to {
+            width: 8rem;
+            text-wrap: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+      navbar {
+        padding-top: 0.5rem;
+        padding-left: 1rem;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        & .channel {
+          padding: 0.25rem 0.5rem;
+          color: #000;
+          background-color: rgba(255, 255, 255, 0.5);
+          cursor: pointer;
+          border-radius: 1rem;
+          max-width: 8rem;
+          text-wrap: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          &.active {
+            background-color: #00f;
+            color: #fff;
+          }
+        }
+      }
+    </style>
+    <script src="public/App.js" defer></script>
+  </head>
+  <body onload="DomLoad()">
+    <navbar></navbar>
+    <history>
+      <message>Welcome to TTYT.</message>
+      <message style="white-space: initial">
+        Send "register" to generate an identity (this may take a few minutes).
+      </message>
+      <message style="white-space: initial">
+        Or, send your previously generated private key (hexadecimal PKCS8) to
+        load your identity.
+      </message>
+    </history>
+    <composer>
+      <textarea autofocus onkeydown="DomKeyDown(event)"></textarea>
+      <select id="post_visibility">
+        <option>🔒 private</option>
+        <option>🗣️ public</option>
+      </select>
+    </composer>
+  </body>
+</html>

@@ -27,7 +27,7 @@ export async function Challenge(params: ChallengeParams) {
     return false;
   }
 
-  const sigStatus = await Crypto.CheckEd25519Signature(key, tok, sig);
+  const sigStatus = await Crypto.CheckEd25519Sig(key, tok, sig);
   if (!sigStatus.sig_valid) {
     res.status(400).json(sigStatus).end();
     return false;

@@ -1,6 +1,7 @@
 import { app, prisma, sec } from '../infrastructure';
 import { Challenge } from '../challenge';
 import * as Crypto from '../crypto';
+const maxLength = 32;
 
 app.get('/mint', (req, res) => {
   if (!req.ip) return res.status(400).end('IP address not visible');
@@ -13,7 +14,7 @@ app.get('/mint', (req, res) => {
 <p>Then POST to <code>/mint</code>:</p>
 <pre>
 {
-  "str": "&lt;the 1-64 byte Unicode recipient you want to mint&gt;",
+  "str": "&lt;the 1-${maxLength} byte Unicode recipient you want to mint&gt;",
   "own": "&lt;registered hexadecimal encoded Ed25519 public key&gt;",
   "key": "&lt;hexadecimal encoded Ed25519 public key&gt;",
   "sig": "&lt;hexadecimal encoded signature of ${short}&gt;",
@@ -25,10 +26,15 @@ app.get('/mint', (req, res) => {
 `);
 });
 
+const sanitise = (str: string) =>
+  str
+    .trim()
+    .replaceAll(/[<>&"'`]/g, '')
+    .slice(0, maxLength);
+
 app.post('/mint', async (req, res) => {
   const { str, own, key, sig, tok } = req.body;
-  const sanitised =
-    typeof str === 'string' ? str.trim().replaceAll(/[<>&"'`]/g, '') : '';
+  const sanitised = typeof str === 'string' ? sanitise(str) : '';
   if (
     !sanitised ||
     typeof own !== 'string' ||

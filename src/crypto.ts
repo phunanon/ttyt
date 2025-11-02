@@ -42,7 +42,7 @@ export const VerifyToken = (ip: string, token: string) => {
   return valid ? 'valid' : 'invalid';
 };
 
-export async function CheckEd25519Signature(
+export async function CheckEd25519Sig(
   publicKeyHex: string,
   message: string,
   signatureHex: string,
@@ -69,6 +69,27 @@ export async function CheckEd25519Signature(
     return { sig_error };
   }
 }
+
+type SigStatus = Awaited<ReturnType<typeof CheckEd25519Sig>>;
+export const SigOR = (a: SigStatus, b: SigStatus) => {
+  if ('sig_error' in a) return a;
+  if ('sig_error' in b) return b;
+  const sig_valid = a.sig_valid || b.sig_valid;
+  return { sig_valid };
+};
+
+export const CheckEd25519SigOfEpochMin = async (
+  pubkeyHex: string,
+  sigHex: string,
+) => {
+  const presentMin = Math.floor(Date.now() / 60_000);
+  const previousMin = presentMin - 1;
+  const nextMin = presentMin + 1;
+  const present = await CheckEd25519Sig(pubkeyHex, `${presentMin}`, sigHex);
+  const previous = await CheckEd25519Sig(pubkeyHex, `${previousMin}`, sigHex);
+  const next = await CheckEd25519Sig(pubkeyHex, `${nextMin}`, sigHex);
+  return SigOR(present, SigOR(previous, next));
+};
 
 export const CountLeadingZeroBits = (hex: string): number => {
   const buf = Buffer.from(hex, 'hex');

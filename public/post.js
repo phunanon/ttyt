@@ -48,7 +48,6 @@ async function Post() {
 }
 
 function base64ToHex(str) {
-  console.log('Converting base64 to hex:', str);
   const raw = [...atob(str)];
   const result = raw
     .map(c => {

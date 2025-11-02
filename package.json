@@ -7,11 +7,12 @@
     "migrate": "prisma migrate dev --name $(date +%Y%m%d%H%M)",
     "refresh-db": "rm -rf prisma/migrations prisma/db.db; prisma migrate dev --name init",
     "start": "export NODE_ENV=production; export PORT=3333; node dist/index.js",
-    "dev": "export PORT=3333; node dist/index.js"
+    "dev": "export PORT=3333; concurrently \"tsc -w\" \"nodemon dist/index.js\"",
+    "build": "tsc"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Patrick Bowen",
+  "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@prisma/client": "^6.17.1",
@@ -20,6 +21,8 @@
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.9.1",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10",
     "prisma": "^6.17.1",
     "typescript": "^5.9.3"
   }

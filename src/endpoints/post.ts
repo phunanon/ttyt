@@ -26,7 +26,7 @@ app.post('/post', async (req, res) => {
   if (typeof parsed.public !== 'boolean')
     return res.status(400).end('Missing payload public flag');
 
-  const sigStatus = await Crypto.CheckEd25519Signature(key, payload, sig);
+  const sigStatus = await Crypto.CheckEd25519Sig(key, payload, sig);
   if (!sigStatus.sig_valid) return res.status(400).json(sigStatus).end();
 
   const [authorPoW, recipientPoW] = await Promise.all([
@@ -35,6 +35,8 @@ app.post('/post', async (req, res) => {
   ]);
   if (!authorPoW) return res.status(400).end('key not found');
   if (!recipientPoW) return res.status(400).end('recipient not found');
+  if (recipientPoW.ownerId && !parsed.public)
+    return res.status(400).end('minted recipients accept public posts only');
 
   try {
     const createdSec = sec();
