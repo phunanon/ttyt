@@ -1,0 +1,69 @@
+# TTYT
+
+A hobbyist's solution to the drawbacks of email in the 21st century.
+
+Aims to solve these problems:
+
+- Spam
+- Protocol complexity
+- Weak non-repudiation
+- Vendor lock-in
+
+While retaining these benefits:
+
+- Decentralised hosting
+
+TTYT is a HTTPS server offering these features:
+
+- Generate an identity with only a proof-of-work challenge
+- Manage an address book of other identities
+- Send data to any identity
+  - the sender will have to complete a proof-of-work challenge if not in the recipient's address book
+- Read data sent to your identity
+- Clear data sent to your identity
+
+Due to its design, I'm not afraid to say you can send me a TTYT mail (if you're willing to do proof-of-work!): xxx@ttyt.7287425.xyz
+
+## API
+
+### Public endpoints
+
+- [x] `GET /`: redirect to `/ttyt/v1`
+- [x] `GET /ttyt/v1`: retrieve public information about the server instance
+- [x] `GET /ttyt/v1/nonce`: obtain a server nonce
+
+### Gated endpoints (potentially requires proof-of-work)
+
+- [x] `PUT /ttyt/v1/identity/[identity]`: submit a new Ed25519 public key
+  - Mandatory headers:
+    - `X-TTYT-NONCE`: the server nonce used
+    - `X-TTYT-NONCE-SIG`: `X-TTYT-NONCE` signed by `[identity from]`, satisfying [proof-of-work](#proof-of-work).
+- [x] `PUT /ttyt/v1/mail/[identity from]/[identity to]`: send data to an identity
+  - Mandatory headers:
+    - `X-TTYT-BODY-SIG`: request body signed by the `[identity from]` public key
+  - Headers if `[identity from]` is not in the address book of `[identity to]`:
+    - `X-TTYT-NONCE`: the server nonce used
+    - `X-TTYT-NONCE-SIG`: `X-TTYT-NONCE` signed by `[identity from]`, satisfying [proof-of-work](#proof-of-work).
+  - Optional headers:
+    - `X-TTYT-PREV-BODY-SIG`: sending will fail if the body signature of the last mail sent from this identity does not match this header
+
+### Authenticated endpoints
+
+Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a user-generated nonce signed using the `[identity]` public key.
+
+- [x] `GET /ttyt/v1/address-book/[identity]`: retrieve entire address book
+- [x] `PUT /ttyt/v1/address-book/[identity]/[contact]`: add `[contact]` identity to address book
+- [x] `GET /ttyt/v1/mail/[identity]/[start epoch seconds]/[end epoch seconds]`: retrieve up to 100 mail in a certain timeframe
+- [x] `DELETE /ttyt/v1/address-book/[identity]/[contact]`: delete `[contact]` identity from an address book
+- [ ] `DELETE /ttyt/v1/mail/[identity]`: delete mail by timestamps
+- [ ] `DELETE /ttyt/v1/identity/[identity]`: revoke identity from TTYT, deleting: address book, received mail
+
+### Proof-of-work
+
+`X-TTYT-NONCE-SIG` must satisfy `Math.clz32(sign(pubkey, nonce)) > 12`, where `pubkey` is `[identity from]` and `nonce` is `X-TTYT-NONCE`.
+
+### Rationale
+
+**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that they would jeopardise the private key itself let alone replayed requests.
+
+**Proof-of-work.** I accept the reality that people mint new emails even with providers like Google without much stopping them. And so this is embraced: you can have an identity, and send mail, so long as you sacrifice some compute time. Ideally I'd be using a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful, like proof-of-space for storing encrypted chunks of the database. I'd have everybody doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, then are always in the address book of your recipients.

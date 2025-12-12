@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "module": "nodenext",
+    "lib": ["ESNext"],
+    "types": ["preact"],
+    "moduleResolution": "nodenext",
+    "sourceMap": true
+  }
+}

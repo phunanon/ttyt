@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TTYT</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-size: 1.1rem;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #000;
+        color: #eee;
+      }
+      button {
+        padding: 0.5rem;
+      }
+      .column {
+        display: flex;
+        flex-direction: column;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+      .gap-05 {
+        gap: 0.5rem;
+      }
+      .gap-1 {
+        gap: 1rem;
+      }
+      .m-1 {
+        margin: 1rem;
+      }
+    </style>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "preact": "https://esm.sh/preact@10.27.2",
+          "preact/": "https://esm.sh/preact@10.27.2/",
+          "@preact/signals": "https://esm.sh/@preact/signals@2.5.1"
+        }
+      }
+    </script>
+
+    <script type="module" src="index.js"></script>
+  </head>
+  <body></body>
+</html>

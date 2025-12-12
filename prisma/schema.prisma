@@ -7,26 +7,34 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Post {
-  createdSec  Int
-  authorId    Int
-  content     String
-  signature   String
-  public      Boolean
-  recipientId Int
-  author      PowIdentity @relation("Author", fields: [authorId], references: [id])
-  recipient   PowIdentity @relation("Recipient", fields: [recipientId], references: [id])
-
-  @@id([createdSec, authorId])
+model Identity {
+  id                   Int                @id @default(autoincrement())
+  createdSec           Int
+  identity             String             @unique
+  addressBookEntries   AddressBookEntry[] @relation("Owner")
+  inAddressBookEntries AddressBookEntry[] @relation("Contact")
+  sentMail             Mail[]             @relation("Sender")
+  receivedMail         Mail[]             @relation("Recipient")
 }
 
-model PowIdentity {
-  id         Int           @id @default(autoincrement())
+model AddressBookEntry {
+  id         Int      @id @default(autoincrement())
   createdSec Int
-  identity   String        @unique
-  ownerId    Int?
-  Authored   Post[]        @relation("Author")
-  Received   Post[]        @relation("Recipient")
-  owner      PowIdentity?  @relation("Owner", fields: [ownerId], references: [id])
-  assets     PowIdentity[] @relation("Owner")
+  ownerId    Int
+  contactId  Int
+  owner      Identity @relation("Owner", fields: [ownerId], references: [id])
+  contact    Identity @relation("Contact", fields: [contactId], references: [id])
+
+  @@unique([ownerId, contactId])
+}
+
+model Mail {
+  id          Int      @id @default(autoincrement())
+  createdSec  Int
+  senderId    Int
+  recipientId Int
+  body        String
+  bodySig     String
+  sender      Identity @relation("Sender", fields: [senderId], references: [id])
+  recipient   Identity @relation("Recipient", fields: [recipientId], references: [id])
 }

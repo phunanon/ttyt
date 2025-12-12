@@ -1,0 +1,21 @@
+{
+  "name": "ttyt-applet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@preact/signals": "^2.5.1",
+    "preact": "^10.27.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
