@@ -12,11 +12,11 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
   const sender = parties.find(p => p.identity === from);
   const recipient = parties.find(p => p.identity === to);
   if (!sender) {
-    res.status(404).end('sender identity not found');
+    res.status(404).end('[identity from] not found');
     return;
   }
   if (!recipient) {
-    res.status(404).end('recipient identity not found');
+    res.status(404).end('[identity to] not found');
     return;
   }
 
@@ -43,38 +43,77 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
   })();
   if (!passesChallenge) return;
 
+  const body = `${req.body}`;
   await prisma.mail.create({
     data: {
       createdSec: Math.floor(Date.now() / 1000),
-      body: `${req.body}`,
+      firstLine: getFirstLine(body),
+      body,
       bodySig,
       sender: { connect: { id: sender.id } },
       recipient: { connect: { id: recipient.id } },
     },
   });
+
+  res.status(200).end('Mail sent');
 });
 
-app.get('/ttyt/v1/mail/:to/:start/:end', async (req, res) => {
-  const start = Number(req.params.start);
-  const end = Number(req.params.end);
-  if (!Number.isInteger(start) || !Number.isInteger(end)) {
-    res.status(400).end('start or end is not a number');
+app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
+  const gte = Number(req.params.start);
+  const lte = Number(req.params.end);
+  const { identity } = req.params;
+  if (!Number.isInteger(gte) || !Number.isInteger(lte)) {
+    res
+      .status(400)
+      .end('[start epoch seconds] or [end epoch seconds] is not a number');
     return;
   }
-  if (!VerifyNonceSig(req, res, req.params.to, false)) return;
+  if (!VerifyNonceSig(req, res, identity, false)) return;
   const mail = await prisma.mail.findMany({
+    select: {
+      id: true,
+      createdSec: true,
+      body: true,
+      bodySig: true,
+      firstLine: true,
+      sender: { select: { identity: true } },
+    },
+    where: { recipient: { identity }, createdSec: { gte, lte } },
+    orderBy: { createdSec: 'desc' },
+    take: 100,
+  });
+  res.json(mail.map(m => ({ ...m, sender: m.sender.identity })));
+});
+
+app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { identity } = req.params;
+  if (!Number.isInteger(id)) {
+    res.status(400).end('[id] is not a number');
+    return;
+  }
+  if (!VerifyNonceSig(req, res, req.params.identity, false)) return;
+  const mail = await prisma.mail.findFirst({
     select: {
       createdSec: true,
       body: true,
       bodySig: true,
       sender: { select: { identity: true } },
     },
-    where: {
-      recipient: { identity: req.params.to },
-      createdSec: { gte: start, lte: end },
-    },
-    orderBy: { createdSec: 'desc' },
-    take: 100,
+    where: { id, recipient: { identity } },
   });
-  res.json(mail);
+  if (!mail) {
+    res.status(404).end('Mail with that [id] not found');
+    return;
+  }
+  res.json({ ...mail, sender: mail.sender.identity });
 });
+
+function getFirstLine(str:string) {
+  for (let i = 0; i < str.length && i < 256; i++) {
+    const c = str[i];
+    if (c === '\n') return str.slice(0, i);
+    if (c === '\r' && str[i + 1] === '\n') return str.slice(0, i);
+  }
+  return str;
+}

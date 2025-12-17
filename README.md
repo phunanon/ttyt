@@ -4,16 +4,12 @@ A hobbyist's solution to the drawbacks of email in the 21st century.
 
 Aims to solve these problems:
 
-- Spam
-- Protocol complexity
-- Weak non-repudiation
-- Vendor lock-in
+- **Spam.** Potential as a decentralised protocol has failed by relying on provider reputation.
+- **Complexity.** IMAP is virtually impossible to implement from scratch, and email content conventions have high standards for client capability (e.g. attachments, HTML).
+- **Weak non-repudiation.** Only a small fraction of real-world emails are cryptographically signed.
+- **Provider lock-in.** Due to providers needing to build reputation.
 
-While retaining these benefits:
-
-- Decentralised hosting
-
-TTYT is a HTTPS server offering these features:
+TTYT is a HTTPS server API offering these features:
 
 - Generate an identity with only a proof-of-work challenge
 - Manage an address book of other identities
@@ -22,7 +18,7 @@ TTYT is a HTTPS server offering these features:
 - Read data sent to your identity
 - Clear data sent to your identity
 
-Due to its design, I'm not afraid to say you can send me a TTYT mail (if you're willing to do proof-of-work!): xxx@ttyt.7287425.xyz
+Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@ttyt.7287425.xyz`
 
 ## API
 
@@ -53,7 +49,8 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 - [x] `GET /ttyt/v1/address-book/[identity]`: retrieve entire address book
 - [x] `PUT /ttyt/v1/address-book/[identity]/[contact]`: add `[contact]` identity to address book
-- [x] `GET /ttyt/v1/mail/[identity]/[start epoch seconds]/[end epoch seconds]`: retrieve up to 100 mail in a certain timeframe
+- [x] `GET /ttyt/v1/mail/[identity]/[start epoch seconds]/[end epoch seconds]`: retrieve up to 100 mail metadata in a certain timeframe
+- [x] `GET /ttyt/v1/mail/[identity]/[id]`: retrieve a mail with its body and body signature
 - [x] `DELETE /ttyt/v1/address-book/[identity]/[contact]`: delete `[contact]` identity from an address book
 - [ ] `DELETE /ttyt/v1/mail/[identity]`: delete mail by timestamps
 - [ ] `DELETE /ttyt/v1/identity/[identity]`: revoke identity from TTYT, deleting: address book, received mail
@@ -64,6 +61,10 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 ### Rationale
 
-**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that they would jeopardise the private key itself let alone replayed requests.
+**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that I expect they would jeopardise the private key itself let alone replayed requests.
 
-**Proof-of-work.** I accept the reality that people mint new emails even with providers like Google without much stopping them. And so this is embraced: you can have an identity, and send mail, so long as you sacrifice some compute time. Ideally I'd be using a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful, like proof-of-space for storing encrypted chunks of the database. I'd have everybody doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, then are always in the address book of your recipients.
+**Proof-of-work.** I accept the reality that people mint new emails even with providers like Google without much stopping them. And so this is embraced: you can have an identity, and send mail, so long as you sacrifice some compute time. Ideally I'd be using a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful, like proof-of-space for storing encrypted chunks of the database; or something financially beneficial to me, like mining crypto-currency; or something ethical, like doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, then are always in the address book of your recipients.
+
+**Attachments.** TTYT does not have a concept of attachments as these complicate client implementations, and put strain on email providers. Files should instead be served by third-party providers, normalising the exchange of lightweight hashes and secret keys.
+
+**Rich text.** HTML has enabled email to deliver (ideally) accessible, structured, potentially branded content. However, with the advent of LLMs, information can now be automatically extracted from weakly or unconventionally structured documents, increasingly even offline.

@@ -35,6 +35,7 @@ model Mail {
   recipientId Int
   body        String
   bodySig     String
+  firstLine   String
   sender      Identity @relation("Sender", fields: [senderId], references: [id])
   recipient   Identity @relation("Recipient", fields: [recipientId], references: [id])
 }

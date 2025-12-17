@@ -6,11 +6,11 @@ declare global {
   interface Uint8Array {
     toHex: () => string;
   }
-  type Seckey = readonly [CryptoKey, 'secret'];
-  type Pubkey = readonly [ArrayBuffer, 'public'];
+  type Seckey = { readonly seckey: CryptoKey };
+  type Pubkey = { readonly pubkey: ArrayBuffer; readonly hex: string };
 }
 
-export const NonceSigHeaders = async ([key]: Seckey) => {
+export const NonceSigHeaders = async ({ seckey: key }: Seckey) => {
   const nonce = crypto.getRandomValues(new Uint8Array(16)).toHex();
   const bytes = new TextEncoder().encode(nonce);
   const signature = await crypto.subtle.sign({ name: 'Ed25519' }, key, bytes);
@@ -19,6 +19,13 @@ export const NonceSigHeaders = async ([key]: Seckey) => {
     'X-TTYT-NONCE': nonce,
     'X-TTYT-NONCE-SIG': new Uint8Array(sigArr).toHex(),
   };
+};
+
+export const BodySigHeaders = async ({ seckey: key }: Seckey, body: string) => {
+  const bytes = new TextEncoder().encode(body);
+  const signature = await crypto.subtle.sign({ name: 'Ed25519' }, key, bytes);
+  const sigArr = new Uint8Array(signature);
+  return { 'X-TTYT-BODY-SIG': new Uint8Array(sigArr).toHex() };
 };
 
 export const IngestSeckey = async (seckeyHex: string) => {
@@ -52,9 +59,7 @@ export const IngestSeckey = async (seckeyHex: string) => {
   const publicKeyBytes = Uint8Array.fromBase64(publicKeyBase64);
 
   return {
-    seckey: [nonExportable, 'secret'] as const,
-    pubkey: [publicKeyBytes.buffer, 'public'] as const,
+    seckey: { seckey: nonExportable },
+    pubkey: { pubkey: publicKeyBytes.buffer, hex: publicKeyBytes.toHex() },
   };
 };
-
-export const PubkeyToHex = ([pubkey]: Pubkey) => new Uint8Array(pubkey).toHex();

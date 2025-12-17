@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@preact/signals':
-        specifier: ^2.5.1
-        version: 2.5.1(preact@10.27.2)
       preact:
         specifier: ^10.27.2
         version: 10.27.2
@@ -21,14 +18,6 @@ importers:
 
 packages:
 
-  '@preact/signals-core@1.12.1':
-    resolution: {integrity: sha512-BwbTXpj+9QutoZLQvbttRg5x3l5468qaV2kufh+51yha1c53ep5dY4kTuZR35+3pAZxpfQerGJiQqg34ZNZ6uA==}
-
-  '@preact/signals@2.5.1':
-    resolution: {integrity: sha512-VPjk5YFt7i11Fi4UK0tzaEe5xLwfhUxXL3l89ocxQ5aPz7bRo8M5+N73LjBMPklyXKYKz6YsNo4Smp8n6nplng==}
-    peerDependencies:
-      preact: '>= 10.25.0 || >=11.0.0-0'
-
   preact@10.27.2:
     resolution: {integrity: sha512-5SYSgFKSyhCbk6SrXyMpqjb5+MQBgfvEKE/OC+PujcY34sOpqtr+0AZQtPYx5IA6VxynQ7rUPCtKzyovpj9Bpg==}
 
@@ -38,13 +27,6 @@ packages:
     hasBin: true
 
 snapshots:
-
-  '@preact/signals-core@1.12.1': {}
-
-  '@preact/signals@2.5.1(preact@10.27.2)':
-    dependencies:
-      '@preact/signals-core': 1.12.1
-      preact: 10.27.2
 
   preact@10.27.2: {}
 
