@@ -12,12 +12,13 @@ type Mail = MailMetadata & {
   body: string;
   bodySig: string;
 };
+type BottomPanelView = 'compose' | 'address-book' | MailMetadata;
 
 type MailboxListProps = WithStateProps<'identified'> & {
   viewingId?: number;
-  onSelect: (mail: MailMetadata) => void;
+  setView: (view: BottomPanelView) => void;
 };
-const MailboxList = ({ viewingId, state, onSelect }: MailboxListProps) => {
+const MailboxList = ({ viewingId, state, setView }: MailboxListProps) => {
   type Mailbox = { retrieved: Date; mail: MailMetadata[] };
   const [mailbox, setMailbox] = useState<Mailbox>();
 
@@ -43,9 +44,14 @@ const MailboxList = ({ viewingId, state, onSelect }: MailboxListProps) => {
 
   return (
     <div class="fill">
-      <div class="p-05">
-        {mailbox.mail.length} mail retrieved at{' '}
-        {mailbox.retrieved.toLocaleTimeString()}
+      <div class="row space-between">
+        <div class="p-05">
+          {mailbox.mail.length} mail retrieved at{' '}
+          {mailbox.retrieved.toLocaleTimeString()}
+        </div>
+        <div>
+          <button onClick={() => setView('address-book')}>Address book</button>
+        </div>
       </div>
       <div style={{ flex: 1 }}>
         {mailbox.mail.length === 0 && <div class="m-1">No mail.</div>}
@@ -55,9 +61,9 @@ const MailboxList = ({ viewingId, state, onSelect }: MailboxListProps) => {
               m.id === viewingId ? ' viewing' : ''
             }`}
             key={m.id}
-            onClick={() => onSelect(m)}
+            onClick={() => setView(m)}
           >
-            <span class="row gap-1">
+            <span class="row gap-1 align-items-center">
               <code>{m.sender.slice(0, 6)}</code> {m.firstLine}
             </span>
             <span>{new Date(m.createdSec * 1000).toLocaleString()}</span>
@@ -131,36 +137,69 @@ const Viewer = ({ state, view }: ViewerProps) => {
   );
 };
 
-type ViewOrComposeProps = WithStateProps<'identified'> &
+const AddressBookEditor = ({ state }: WithStateProps<'identified'>) => {
+  type AddressBook = { identity: string; addedSec: number }[];
+  const [addressBook, setAddressBook] = useState<AddressBook>();
+
+  useEffect(() => {
+    const fetchAddressBook = async () => {
+      const res = await fetch(`/ttyt/v1/address-book/${state.pubkey.hex}`, {
+        headers: await NonceSigHeaders(state.seckey),
+      });
+      if (res.status !== 200) {
+        alert('Failed to fetch address book: ' + (await res.text()));
+        return;
+      }
+      const addressBook = (await res.json()) as AddressBook;
+      setAddressBook(addressBook);
+    };
+    fetchAddressBook();
+  }, []);
+
+  if (!addressBook) {
+    return <div class="fill p-1">Loading address book...</div>;
+  }
+
+  const rows = addressBook.map(a => (
+    <div class="row space-between align-items-center gap-05 px-05">
+      <code class="ellipsis fill">{a.identity}</code>
+      {new Date(a.addedSec * 1_000).toLocaleString()}
+      <button class="sm">🗑</button>
+    </div>
+  ));
+
+  return <div class="column fill gap-05">{rows}</div>;
+};
+
+type BottomPanelProps = WithStateProps<'identified'> &
   ComposerProps & {
-    view?: MailMetadata;
-    setView: (mail?: MailMetadata) => void;
+    view: BottomPanelView;
+    setView: (view: BottomPanelView) => void;
   };
-const ViewOrCompose = ({ view, ...props }: ViewOrComposeProps) => {
-  return view ? (
-    <Viewer {...props} view={view} key={view.id} />
-  ) : (
-    <Composer {...props} />
-  );
+const BottomPanel = ({ view, ...props }: BottomPanelProps) => {
+  if (typeof view === 'object')
+    return <Viewer {...props} view={view} key={view.id} />;
+  if (view === 'compose') return <Composer {...props} />;
+  return <AddressBookEditor {...props} />;
 };
 
 export const Identified = (props: WithStateProps<'identified'>) => {
-  const [view, setView] = useState<MailMetadata>();
+  const [view, setView] = useState<BottomPanelView>('compose');
 
-  const handleSelect = (mail: MailMetadata) => {
-    setView(v => (v === mail ? undefined : mail));
+  const handleSelect = (view: BottomPanelView) => {
+    setView(v => (v === view ? 'compose' : view));
   };
 
   return (
-    <div class="column" style={{ height: '100vh' }}>
+    <div class="column" style={{ height: '100vh'}}>
       <MailboxList
         {...props}
-        viewingId={view?.id}
-        onSelect={handleSelect}
+        viewingId={typeof view === 'object' ? view.id : undefined}
+        setView={handleSelect}
         key={JSON.stringify(props)}
       />
       <div class="row fill">
-        <ViewOrCompose {...props} {...{ view, setView }} />
+        <BottomPanel {...props} {...{ view, setView }} />
       </div>
     </div>
   );
