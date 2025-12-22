@@ -93,7 +93,7 @@ const Composer = ({ state, ...props }: ComposerProps) => {
       <div class="row gap-05">
         <input
           class="fill"
-          placeholder="Public key"
+          placeholder="Recipient public key"
           value={to}
           onChange={e => setTo(e.currentTarget.value)}
         />

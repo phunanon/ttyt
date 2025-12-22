@@ -1,4 +1,4 @@
-# TTYT
+# [TTYT](https://github.com/phunanon/ttyt)
 
 A hobbyist's solution to the drawbacks of email in the 21st century.
 
@@ -18,7 +18,7 @@ TTYT is a HTTPS server API offering these features:
 - Read data sent to your identity
 - Clear data sent to your identity
 
-Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@ttyt.7287425.xyz`
+Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287425.xyz`
 
 ## API
 

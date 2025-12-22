@@ -2,3 +2,6 @@ onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
   - prisma
+
+packages:
+  - 'public/app'

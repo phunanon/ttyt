@@ -43,6 +43,7 @@ const Greeter = ({ set }: WithStateProps<'greeter'>) => {
         <button onClick={() => set({ page: 'generate' })}>
           Alternatively, generate key
         </button>
+        <a href="/ttyt/v1">About this TTYT instance</a>
       </div>
     </div>
   );

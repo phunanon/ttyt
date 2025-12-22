@@ -76,7 +76,7 @@ app.use((req, res, next) => {
 app.use(express.text({ limit: '1kb' }));
 app.use('/public', express.static('public'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

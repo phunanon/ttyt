@@ -2,7 +2,7 @@ import process from 'node:process';
 import { app } from '../infrastructure';
 
 app.get('/', (req, res) => {
-  res.redirect('/ttyt/v1');
+  res.redirect('/public');
 });
 
 app.get('/ttyt/v1', async (req, res) => {
