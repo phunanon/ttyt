@@ -50,9 +50,9 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 - [x] `GET /ttyt/v1/address-book/[identity]`: retrieve entire address book
 - [x] `PUT /ttyt/v1/address-book/[identity]/[contact]`: add `[contact]` identity to address book
 - [x] `GET /ttyt/v1/mail/[identity]/[start epoch seconds]/[end epoch seconds]`: retrieve up to 100 mail metadata in a certain timeframe
-- [x] `GET /ttyt/v1/mail/[identity]/[id]`: retrieve a mail with its body and body signature
+- [x] `GET /ttyt/v1/mail/[identity]/[ID]`: retrieve a mail with its body and body signature
 - [x] `DELETE /ttyt/v1/address-book/[identity]/[contact]`: delete `[contact]` identity from an address book
-- [ ] `DELETE /ttyt/v1/mail/[identity]`: delete mail by timestamps
+- [ ] `DELETE /ttyt/v1/mail/[identity]/[ID]`: delete a mail
 - [ ] `DELETE /ttyt/v1/identity/[identity]`: revoke identity from TTYT, deleting: address book, received mail
 
 ### Proof-of-work
@@ -71,5 +71,7 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 **No "Sent".** A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me being sent spam from those credentials before I can revoke the public key or remove it from my stable address book.
 
+**No external addresses or address book references.** Remembering external addresses, or address references, can be achieved in client implementations or through traditional clerical means. This way, servers aren't encouraged to hold more information than necessary.
+
 TODO:
-- don't enforce contact integrity because contacts might be from another TTYT server
+- short aliases

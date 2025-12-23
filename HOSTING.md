@@ -6,6 +6,7 @@ Instructions for a Raspberry Pi 4 (though you could probably do the exact same t
 cd scripts
 bash install-caddy.sh
 bash install-podman.sh
+cd ..
 
 pnpm i
 pnpm migrate
@@ -14,15 +15,10 @@ pnpm migrate
 
 cd tmail
 pnpm build
+cd ..
 
-podman build -t ttyt .
+bash scripts/redeploy-container.sh
+
 # podman images
-podman run -d --rm \
-  --name ttyt \
-  -p 8000:8000 \
-  -v ./prisma:/app/prisma \
-  -v ./node_modules:/app/node_modules \
-  -v ./tmail/dist:/app/www \
-  ttyt
 # podman ps -a
 ```

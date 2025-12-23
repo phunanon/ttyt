@@ -35,26 +35,27 @@ const MailboxList = ({ state }: MailboxListProps) => {
   }
 
   return (
-    <div class="fill">
-      <div class="row space-between">
-        <div class="row gap-05 align-items-center">
-          <button onClick={fetchMail}>Refresh</button>
-          <span>
-            {mailbox.mail.length} mail retrieved at{' '}
-            {mailbox.retrieved.toLocaleTimeString()}
+    <div class="fill column gap-1 p-05">
+      <div class="row space-between align-items-center">
+        <div class="row gap-1 align-items-center">
+          <h1 style={{ marginLeft: '1rem' }}>tmail</h1>
+          <span class="btn-group">
+            <button onClick={() => setView({ view: 'address-book' })}>
+              Address book
+            </button>
+            <button onClick={fetchMail}>Refresh</button>
           </span>
         </div>
-        <div>
-          <button onClick={() => setView({ view: 'address-book' })}>
-            Address book
-          </button>
-        </div>
+        <span>
+          {mailbox.mail.length} mail retrieved at{' '}
+          {mailbox.retrieved.toLocaleTimeString()}
+        </span>
       </div>
-      <div style={{ flex: 1 }}>
+      <div class="column">
         {mailbox.mail.length === 0 && <div class="m-1">No mail.</div>}
         {mailbox.mail.map(m => (
-          <div
-            class={`row space-between p-05 mail${
+          <button
+            class={`row gap-05 space-between p-05 mail${
               m.id === viewingId ? ' viewing' : ''
             }`}
             key={m.id}
@@ -64,7 +65,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
               <code>{m.sender.slice(0, 6)}</code> {m.firstLine}
             </span>
             <span>{new Date(m.createdSec * 1000).toLocaleString()}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -124,8 +125,10 @@ const Contact = ({ pubkey, className }: ContactProps) => {
 
   return (
     <code class={`row-inline gap-05 align-items-center ${className ?? ''}`}>
-      <button onClick={handleCopy}>📄</button>
-      <button onClick={handleCompose}>📨</button>
+      <span class="btn-group">
+        <button onClick={handleCopy}>📄</button>
+        <button onClick={handleCompose}>📨</button>
+      </span>
       <span class="ellipsis">{pubkey}</span>
     </code>
   );
@@ -148,16 +151,14 @@ const Viewer = ({ state, view }: ViewerProps) => {
       setMail(mail);
     };
     fetchMail();
-  }, []);
+  }, [view.id]);
 
   const content = mail ? mail.body : <b>Loading...</b>;
   return (
-    <pre class="fill column gap-1">
-      <b>
-        From: <Contact pubkey={view.sender} />
-      </b>
-      {content}
-    </pre>
+    <div class="column fill gap-05">
+      <Contact pubkey={view.sender} />
+      <pre class="fill">{content}</pre>
+    </div>
   );
 };
 
@@ -203,17 +204,20 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
     await fetchAddressBook();
   };
 
+  //TODO: handle delete contact
   const rows = addressBook.map(a => (
-    <div class="row space-between align-items-center gap-05 px-05">
+    <div class="row space-between align-items-center gap-05">
       <Contact pubkey={a.identity} className="fill" />
       {new Date(a.addedSec * 1_000).toLocaleString()}
-      <button class="sm">🗑</button>
+      <button class="sm">🗑️</button>
     </div>
   ));
 
   return (
     <div class="column fill gap-05">
-      <button onClick={handleNewContact}>Add new contact</button>
+      <span>
+        <button onClick={handleNewContact}>Add new contact</button>
+      </span>
       {rows}
     </div>
   );
@@ -232,7 +236,7 @@ export const Identified = (props: WithStateProps<'identified'>) => {
   return (
     <div class="column" style={{ height: '100vh' }}>
       <MailboxList {...props} key={JSON.stringify(props)} />
-      <div class="row fill">
+      <div class="fill card column">
         <BottomPanel {...props} />
       </div>
     </div>

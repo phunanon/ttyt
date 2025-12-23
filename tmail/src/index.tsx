@@ -28,7 +28,7 @@ const Greeter = ({ set }: WithStateProps<'greeter'>) => {
       }}
     >
       <div class="column gap-05">
-        <div class="row">
+        <div class="row input-group">
           <input
             type="password"
             placeholder="Ed25519 private key"

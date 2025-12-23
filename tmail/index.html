@@ -5,21 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TTYT</title>
     <style>
+      :root {
+        --input: #6f97cf;
+        --inputting: #7fa7df;
+        --act: #cfcf6f;
+        --read: #6fcf97;
+      }
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
         font-size: 1.1rem;
+        font-family: sans-serif;
       }
       body {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background-color: #333;
-        color: #eee;
+        background-color: #444;
+        color: #fff;
+      }
+      h1 {
+        font-size: 2rem;
       }
       button {
         padding: 0.5rem;
+        cursor: pointer;
+      }
+      a {
+        color: lightblue;
       }
       .column {
         display: flex;
@@ -35,6 +49,7 @@
       }
       .row-inline {
         display: inline-flex;
+        flex-wrap: nowrap;
       }
       .gap-05 {
         gap: 0.5rem;
@@ -51,10 +66,6 @@
       .p-1 {
         padding: 1rem;
       }
-      .px-05 {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-      }
       .fill {
         flex: 1;
       }
@@ -62,27 +73,39 @@
       textarea,
       button,
       pre {
+        border: none;
         background-color: #000;
         color: #fff;
         padding: 0.5rem;
-        border-radius: 0.5rem;
       }
-      button.sm {
-        padding: 0.25rem 0.25rem 0rem 0.25rem;
-        min-width: 2.5rem;
+      input,
+      textarea {
+        border: 2px solid var(--input);
+
+        &:focus {
+          outline: none;
+          border-color: white;
+        }
+      }
+      button:hover {
+        border-color: #fff;
+      }
+      pre {
+        border: 2px solid var(--read);
+        border-radius: 0.5rem;
       }
       .space-between {
         justify-content: space-between;
       }
       .mail {
+        border-radius: 0;
+        border: 0;
+        background-color: transparent;
         &:not(:last-child) {
-          border-bottom: 0.1rem solid black;
+          border-bottom: 0.1rem solid var(--read);
         }
-        &:hover {
-          background-color: #444;
-          cursor: pointer;
-        }
-        .viewing {
+        &:hover,
+        &.viewing {
           background-color: #555;
         }
       }
@@ -91,6 +114,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         min-width: 6rem;
+        padding-right: 1rem;
       }
       .align-items-center {
         align-items: center;
@@ -98,9 +122,53 @@
       pre {
         white-space: pre-wrap;
       }
+      .card {
+        margin: 0.5rem;
+        padding: 0.5rem;
+        background-color: #333;
+        border-radius: 0.5rem;
+      }
+
+      button {
+        border: 2px solid var(--act);
+        border-radius: 0.5rem;
+      }
+      .btn-group {
+        flex-shrink: 0;
+        > button:first-child {
+          border-radius: 0.5rem 0 0 0.5rem;
+          border-left: 2px solid var(--act);
+        }
+        > button:last-child {
+          border-radius: 0 0.5rem 0.5rem 0;
+        }
+        > button {
+          border-top: 2px solid var(--act);
+          border-bottom: 2px solid var(--act);
+          border-right: 2px solid var(--act);
+
+          &:hover {
+            border-color: #fff;
+          }
+        }
+      }
+
+      .input-group {
+        > input {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        > button {
+          border-radius: 0 0.5rem 0.5rem 0;
+        }
+      }
     </style>
 
     <script type="module" src="/src/index.tsx"></script>
   </head>
   <body></body>
 </html>
+<!-- TODO:
+- Exportable/importable local storage data:
+  - contact references
+  - internet contacts (xxx@xxx.xxx)
+-->
