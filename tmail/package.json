@@ -5,16 +5,21 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "node build.js && tsc"
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "preact": "^10.27.2"
+    "preact": "^10.27.2",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@preact/preset-vite": "^2.10.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0"
   }
 }

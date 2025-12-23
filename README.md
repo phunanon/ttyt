@@ -68,3 +68,8 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 **Attachments.** TTYT does not have a concept of attachments as these complicate client implementations, and put strain on email providers. Files should instead be served by third-party providers, normalising the exchange of lightweight hashes and secret keys.
 
 **Rich text.** HTML has enabled email to deliver (ideally) accessible, structured, potentially branded content. However, with the advent of LLMs, information can now be automatically extracted from weakly or unconventionally structured documents, increasingly even offline.
+
+**No "Sent".** A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me being sent spam from those credentials before I can revoke the public key or remove it from my stable address book.
+
+TODO:
+- don't enforce contact integrity because contacts might be from another TTYT server

@@ -4,4 +4,4 @@ onlyBuiltDependencies:
   - prisma
 
 packages:
-  - 'public/app'
+  - 'tmail'

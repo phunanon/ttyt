@@ -74,7 +74,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.text({ limit: '1kb' }));
-app.use('/public', express.static('public'));
+app.use('/tmail', express.static('www'));
 
 const PORT = process.env.PORT || 8000;
 

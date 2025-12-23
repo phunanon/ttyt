@@ -12,7 +12,7 @@ pnpm migrate
 pnpm build
 pnpm migrate
 
-cd public
+cd tmail
 pnpm build
 
 podman build -t ttyt .
@@ -22,7 +22,7 @@ podman run -d --rm \
   -p 8000:8000 \
   -v ./prisma:/app/prisma \
   -v ./node_modules:/app/node_modules \
-  -v ./public:/app/public \
+  -v ./tmail/dist:/app/www \
   ttyt
 # podman ps -a
 ```

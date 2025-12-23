@@ -26,11 +26,15 @@
         flex-direction: column;
         max-width: 100vw;
       }
-      .row {
+      .row,
+      .row-inline {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         max-width: 100vw;
+      }
+      .row-inline {
+        display: inline-flex;
       }
       .gap-05 {
         gap: 0.5rem;
@@ -70,15 +74,17 @@
       .space-between {
         justify-content: space-between;
       }
-      .mail:not(:last-child) {
-        border-bottom: 0.1rem solid black;
-      }
-      .mail:hover {
-        background-color: #444;
-        cursor: pointer;
-      }
-      .mail.viewing {
-        background-color: #555;
+      .mail {
+        &:not(:last-child) {
+          border-bottom: 0.1rem solid black;
+        }
+        &:hover {
+          background-color: #444;
+          cursor: pointer;
+        }
+        .viewing {
+          background-color: #555;
+        }
       }
       .ellipsis {
         white-space: nowrap;
@@ -89,19 +95,12 @@
       .align-items-center {
         align-items: center;
       }
+      pre {
+        white-space: pre-wrap;
+      }
     </style>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "preact": "./preact.module.js",
-          "preact/hooks": "./hooks.module.js",
-          "preact/jsx-runtime": "./jsxRuntime.module.js"
-        }
-      }
-    </script>
-
-    <script type="module" src="index.js"></script>
+    <script type="module" src="/src/index.tsx"></script>
   </head>
   <body></body>
 </html>
