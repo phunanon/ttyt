@@ -1,16 +1,17 @@
 import { app, prisma, VerifyNonceSig } from '../infrastructure';
 
 app.put('/ttyt/v1/address-book/:owner/:contact', async (req, res) => {
-  const owner = req.params.owner;
-  const contact = req.params.contact;
+  const { owner, contact } = req.params;
 
   if (!(await VerifyNonceSig(req, res, owner, false))) return;
 
   const parties = await prisma.identity.findMany({
-    where: { identity: { in: [owner, contact] } },
+    where: { OR: [{ identity: { in: [owner, contact] } }, { alias: contact }] },
   });
   const ownerEntry = parties.find(p => p.identity === owner);
-  const contactEntry = parties.find(p => p.identity === contact);
+  const contactEntry = parties.find(
+    p => p.identity === contact || p.alias === contact,
+  );
   if (!ownerEntry) {
     res.status(404).end('owner identity not found');
     return;
@@ -45,22 +46,24 @@ app.get('/ttyt/v1/address-book/:owner', async (req, res) => {
   res.json(
     contacts.map(c => ({
       identity: c.contact.identity,
+      alias: c.contact.alias,
       addedSec: c.createdSec,
     })),
   );
 });
 
 app.delete('/ttyt/v1/address-book/:owner/:contact', async (req, res) => {
-  const owner = req.params.owner;
-  const contact = req.params.contact;
+  const { owner, contact } = req.params;
 
   if (!(await VerifyNonceSig(req, res, owner, false))) return;
 
   const parties = await prisma.identity.findMany({
-    where: { identity: { in: [owner, contact] } },
+    where: { OR: [{ identity: { in: [owner, contact] } }, { alias: contact }] },
   });
   const ownerEntry = parties.find(p => p.identity === owner);
-  const contactEntry = parties.find(p => p.identity === contact);
+  const contactEntry = parties.find(
+    p => p.identity === contact || p.alias === contact,
+  );
   if (!ownerEntry) {
     res.status(404).end('owner identity not found');
     return;
@@ -72,9 +75,7 @@ app.delete('/ttyt/v1/address-book/:owner/:contact', async (req, res) => {
 
   const ownerId = ownerEntry.id;
   const contactId = contactEntry.id;
-  await prisma.addressBookEntry.deleteMany({
-    where: { ownerId, contactId },
-  });
+  await prisma.addressBookEntry.deleteMany({ where: { ownerId, contactId } });
 
   res.status(204).end();
 });

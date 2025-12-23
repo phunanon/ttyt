@@ -62,7 +62,10 @@ const MailboxList = ({ state }: MailboxListProps) => {
             onClick={() => setView({ view: 'mail', mail: m })}
           >
             <span class="row gap-1 align-items-center">
-              <code>{m.sender.slice(0, 6)}</code> {m.firstLine}
+              <code>
+                <u>{m.sender.alias}</u>
+              </code>{' '}
+              {m.firstLine}
             </span>
             <span>{new Date(m.createdSec * 1000).toLocaleString()}</span>
           </button>
@@ -91,7 +94,7 @@ const Composer = ({ state, ...props }: ComposerProps) => {
       <div class="row gap-05">
         <input
           class="fill"
-          placeholder="Recipient public key"
+          placeholder="Recipient alias / identity"
           value={to}
           onChange={e => setTo(e.currentTarget.value)}
         />
@@ -108,19 +111,20 @@ const Composer = ({ state, ...props }: ComposerProps) => {
 };
 
 type ContactProps = {
-  pubkey: string;
+  contact: { identity: string; alias: string };
+  full?: boolean;
   className?: string;
 };
-const Contact = ({ pubkey, className }: ContactProps) => {
+const Contact = ({ contact, full, className }: ContactProps) => {
   const setView = useViewStore(x => x.setBottom);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(pubkey);
+    navigator.clipboard.writeText(contact.identity);
     alert('Copied to clipboard');
   };
 
   const handleCompose = () => {
-    setView({ view: 'compose', to: pubkey });
+    setView({ view: 'compose', to: contact.alias });
   };
 
   return (
@@ -129,7 +133,12 @@ const Contact = ({ pubkey, className }: ContactProps) => {
         <button onClick={handleCopy}>📄</button>
         <button onClick={handleCompose}>📨</button>
       </span>
-      <span class="ellipsis">{pubkey}</span>
+      <span class="ellipsis">
+        <u>{contact.alias}</u>
+        <span style={{ color: '#eee' }}>
+          {full && contact.identity.slice(contact.alias.length)}
+        </span>
+      </span>
     </code>
   );
 };
@@ -156,7 +165,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
   const content = mail ? mail.body : <b>Loading...</b>;
   return (
     <div class="column fill gap-05">
-      <Contact pubkey={view.sender} />
+      <Contact contact={view.sender} full />
       <pre class="fill">{content}</pre>
     </div>
   );
@@ -164,7 +173,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
 
 type AddressBookEditorProps = WithStateProps<'identified'> & {};
 const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
-  type AddressBook = { identity: string; addedSec: number }[];
+  type AddressBook = { identity: string; alias: string; addedSec: number }[];
   const [addressBook, setAddressBook] = useState<AddressBook>();
 
   const fetchAddressBook = async () => {
@@ -188,7 +197,7 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
   }
 
   const handleNewContact = async () => {
-    const contact = prompt('Enter contact public key');
+    const contact = prompt('Enter contact alias / identity');
     if (!contact) return;
     const res = await fetch(
       `/ttyt/v1/address-book/${state.pubkey.hex}/${contact}`,
@@ -205,10 +214,10 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
   };
 
   //TODO: handle delete contact
-  const rows = addressBook.map(a => (
+  const rows = addressBook.map(addr => (
     <div class="row space-between align-items-center gap-05">
-      <Contact pubkey={a.identity} className="fill" />
-      {new Date(a.addedSec * 1_000).toLocaleString()}
+      <Contact contact={addr} className="fill" full />
+      {new Date(addr.addedSec * 1_000).toLocaleString()}
       <button class="sm">🗑️</button>
     </div>
   ));

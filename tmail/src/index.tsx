@@ -41,7 +41,7 @@ const Greeter = ({ set }: WithStateProps<'greeter'>) => {
           <button onClick={() => onSubmitPk(typedPk)}>➡️</button>
         </div>
         <button onClick={() => set({ page: 'generate' })}>
-          Alternatively, generate key
+          Or, generate an identity
         </button>
         <a href="/ttyt/v1">About this TTYT instance</a>
       </div>

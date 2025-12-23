@@ -1,7 +1,7 @@
 export type MailMetadata = {
   id: number;
   createdSec: number;
-  sender: string;
+  sender: { identity: string; alias: string };
   firstLine: string;
 };
 export type Mail = MailMetadata & {

@@ -4,7 +4,7 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
@@ -12,6 +12,7 @@ model Identity {
   id                   Int                @id @default(autoincrement())
   createdSec           Int
   identity             String             @unique
+  alias                String             @unique
   addressBookEntries   AddressBookEntry[] @relation("Owner")
   inAddressBookEntries AddressBookEntry[] @relation("Contact")
   sentMail             Mail[]             @relation("Sender")
@@ -23,8 +24,8 @@ model AddressBookEntry {
   createdSec Int
   ownerId    Int
   contactId  Int
-  owner      Identity @relation("Owner", fields: [ownerId], references: [id])
-  contact    Identity @relation("Contact", fields: [contactId], references: [id])
+  owner      Identity @relation("Owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  contact    Identity @relation("Contact", fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([ownerId, contactId])
 }
@@ -38,5 +39,5 @@ model Mail {
   bodySig     String
   firstLine   String
   sender      Identity @relation("Sender", fields: [senderId], references: [id])
-  recipient   Identity @relation("Recipient", fields: [recipientId], references: [id])
+  recipient   Identity @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
 }

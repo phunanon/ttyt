@@ -30,7 +30,7 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 ### Gated endpoints (potentially requires proof-of-work)
 
-- [x] `PUT /ttyt/v1/identity/[identity]`: submit a new Ed25519 public key
+- [x] `PUT /ttyt/v1/identity/[identity]` or `PUT /ttyt/v1/alias/[identity]`: submit a new Ed25519 public key, optionally being granted an alias
   - Mandatory headers:
     - `X-TTYT-NONCE`: the server nonce used
     - `X-TTYT-NONCE-SIG`: `X-TTYT-NONCE` signed by `[identity from]`, satisfying [proof-of-work](#proof-of-work).
@@ -72,6 +72,3 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 **No "Sent".** A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me being sent spam from those credentials before I can revoke the public key or remove it from my stable address book.
 
 **No external addresses or address book references.** Remembering external addresses, or address references, can be achieved in client implementations or through traditional clerical means. This way, servers aren't encouraged to hold more information than necessary.
-
-TODO:
-- short aliases

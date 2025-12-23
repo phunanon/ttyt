@@ -109,7 +109,10 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
   if (pkcs8) {
     return (
       <div class="column gap-05">
-        Submitted!
+        <span>Submitted! Your private key (keep this safe):</span>
+        <code>
+          <u>{pkcs8}</u>
+        </code>
         <button onClick={handleProceed(pkcs8)}>
           Proceed with this identity.
         </button>
@@ -117,8 +120,9 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
     );
   }
 
-  const handleSubmit = (result: PoWResult) => async () => {
-    const res = await fetch(`/ttyt/v1/identity/${result.publicKey}`, {
+  const handleSubmit = (result: PoWResult, aliased: boolean) => async () => {
+    const endpoint = aliased ? 'alias' : 'identity';
+    const res = await fetch(`/ttyt/v1/${endpoint}/${result.publicKey}`, {
       method: 'PUT',
       headers: {
         'X-TTYT-NONCE': result.nonce,
@@ -133,7 +137,14 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
   };
 
   const submitButton = 'pkcs8' in progress && (
-    <button onClick={handleSubmit(progress)}>Submit Identity</button>
+    <>
+      <button onClick={handleSubmit(progress, true)}>
+        Submit alias (shorter)
+      </button>
+      <button onClick={handleSubmit(progress, false)}>
+        Submit identity (obscurer)
+      </button>
+    </>
   );
   return (
     <div class="column gap-1">

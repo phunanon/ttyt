@@ -1,16 +1,16 @@
 import { app, prisma, VerifyBodySig, VerifyNonceSig } from '../infrastructure';
 
 app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
-  const from = req.params.from;
-  const to = req.params.to;
+  const { from, to } = req.params;
+
   const bodySig = await VerifyBodySig(req, res, from);
   if (!bodySig) return;
 
   const parties = await prisma.identity.findMany({
-    where: { identity: { in: [from, to] } },
+    where: { OR: [{ identity: { in: [from, to] } }, { alias: to }] },
   });
   const sender = parties.find(p => p.identity === from);
-  const recipient = parties.find(p => p.identity === to);
+  const recipient = parties.find(p => p.identity === to || p.alias === to);
   if (!sender) {
     res.status(404).end('[identity from] not found');
     return;
@@ -76,13 +76,13 @@ app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
       body: true,
       bodySig: true,
       firstLine: true,
-      sender: { select: { identity: true } },
+      sender: { select: { identity: true, alias: true } },
     },
     where: { recipient: { identity }, createdSec: { gte, lte } },
     orderBy: { createdSec: 'desc' },
     take: 100,
   });
-  res.json(mail.map(m => ({ ...m, sender: m.sender.identity })));
+  res.json(mail);
 });
 
 app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
@@ -98,7 +98,7 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
       createdSec: true,
       body: true,
       bodySig: true,
-      sender: { select: { identity: true } },
+      sender: { select: { identity: true, alias: true } },
     },
     where: { id, recipient: { identity } },
   });
@@ -106,10 +106,10 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
     res.status(404).end('Mail with that [id] not found');
     return;
   }
-  res.json({ ...mail, sender: mail.sender.identity });
+  res.json(mail);
 });
 
-function getFirstLine(str:string) {
+function getFirstLine(str: string) {
   for (let i = 0; i < str.length && i < 256; i++) {
     const c = str[i];
     if (c === '\n') return str.slice(0, i);
