@@ -10,6 +10,7 @@
 
 7287425.xyz:4001 {
   reverse_proxy localhost:8000
+  encode
 }
 
 # Refer to the Caddy docs for more information:

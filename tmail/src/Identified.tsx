@@ -35,8 +35,8 @@ const MailboxList = ({ state }: MailboxListProps) => {
   }
 
   return (
-    <div class="fill column gap-1 p-05">
-      <div class="row space-between align-items-center">
+    <div class="fill column scroll">
+      <div class="row gap-05 space-between align-items-center p-05">
         <div class="row gap-1 align-items-center">
           <h1 style={{ marginLeft: '1rem' }}>tmail</h1>
           <span class="btn-group">
@@ -245,7 +245,7 @@ export const Identified = (props: WithStateProps<'identified'>) => {
   return (
     <div class="column" style={{ height: '100vh' }}>
       <MailboxList {...props} key={JSON.stringify(props)} />
-      <div class="fill card column">
+      <div class="fill card column scroll">
         <BottomPanel {...props} />
       </div>
     </div>

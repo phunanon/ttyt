@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -16,7 +16,9 @@
         padding: 0;
         box-sizing: border-box;
         font-size: 1.1rem;
-        font-family: sans-serif;
+        &:not(code):not(pre) {
+          font-family: sans-serif;
+        }
       }
       body {
         display: flex;
@@ -81,6 +83,8 @@
       input,
       textarea {
         border: 2px solid var(--input);
+        min-width: 3rem;
+        resize: none;
 
         &:focus {
           outline: none;
@@ -93,6 +97,7 @@
       pre {
         border: 2px solid var(--read);
         border-radius: 0.5rem;
+        white-space: pre-wrap;
       }
       .space-between {
         justify-content: space-between;
@@ -119,16 +124,12 @@
       .align-items-center {
         align-items: center;
       }
-      pre {
-        white-space: pre-wrap;
-      }
       .card {
         margin: 0.5rem;
         padding: 0.5rem;
         background-color: #333;
         border-radius: 0.5rem;
       }
-
       button {
         border: 2px solid var(--act);
         border-radius: 0.5rem;
@@ -152,13 +153,23 @@
           }
         }
       }
-
       .input-group {
         > input {
           border-radius: 0.5rem 0 0 0.5rem;
         }
         > button {
           border-radius: 0 0.5rem 0.5rem 0;
+        }
+      }
+      .scroll {
+        overflow-y: scroll;
+      }
+      @media only screen and (max-width: 512px) {
+        h1 {
+          display: none;
+        }
+        .card {
+          margin: 0;
         }
       }
     </style>
