@@ -1,6 +1,9 @@
+#!/bin/bash
+set -x
 pnpm build
-podman build -t ttyt .
 podman stop ttyt
+podman rm ttyt
+podman build -t ttyt .
 podman run -d --rm \
   --name ttyt \
   -p 8000:8000 \

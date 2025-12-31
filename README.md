@@ -52,7 +52,7 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 - [x] `GET /ttyt/v1/mail/[identity]/[start epoch seconds]/[end epoch seconds]`: retrieve up to 100 mail metadata in a certain timeframe
 - [x] `GET /ttyt/v1/mail/[identity]/[ID]`: retrieve a mail with its body and body signature
 - [x] `DELETE /ttyt/v1/address-book/[identity]/[contact]`: delete `[contact]` identity from an address book
-- [ ] `DELETE /ttyt/v1/mail/[identity]/[ID]`: delete a mail
+- [x] `DELETE /ttyt/v1/mail/[identity]/[ID]`: delete a mail
 - [ ] `DELETE /ttyt/v1/identity/[identity]`: revoke identity from TTYT, deleting: address book, received mail
 
 ### Proof-of-work
@@ -72,3 +72,8 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 **No "Sent".** A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me being sent spam from those credentials before I can revoke the public key or remove it from my stable address book.
 
 **No external addresses or address book references.** Remembering external addresses, or address references, can be achieved in client implementations or through traditional clerical means. This way, servers aren't encouraged to hold more information than necessary.
+
+**No proscribed encryption.** I have debated this in my mind, but it all comes down to not wanting to enforce one particular algorithm over another, and not wanting to lull people into a false sense of security. I wouldn't want users to think that because an encryption method has been baked in that it makes it all inherently safe - it's not. Encryption should be at the client level, and ideally handled with as few tools and codebases as practicable, independent of the communication provider.
+
+TODO:
+- think of something better than `X-TTYT-PREV-BODY-SIG` which applies to all operations, and explain it in the rationale

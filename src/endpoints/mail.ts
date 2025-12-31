@@ -109,6 +109,22 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
   res.json(mail);
 });
 
+app.delete('/ttyt/v1/mail/:identity/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { identity } = req.params;
+  if (!Number.isInteger(id)) {
+    res.status(400).end('[id] is not a number');
+    return;
+  }
+  if (!VerifyNonceSig(req, res, req.params.identity, false)) return;
+
+  const { count } = await prisma.mail.deleteMany({
+    where: { id },
+  });
+
+  res.status(count ? 200 : 404).end();
+});
+
 function getFirstLine(str: string) {
   for (let i = 0; i < str.length && i < 256; i++) {
     const c = str[i];

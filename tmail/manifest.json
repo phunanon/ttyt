@@ -1,0 +1,13 @@
+{
+  "name": "Tmail",
+  "short_name": "Tmail",
+  "start_url": "/tmail",
+  "display": "standalone",
+  "theme_color": "#444",
+  "background_color": "#444",
+  "icons": [
+    {
+      "src": "/tmail/favicon.svg"
+    }
+  ]
+}

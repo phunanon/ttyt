@@ -4,6 +4,15 @@ import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
 
+const A = (sec: number) => new Date(sec * 1000).toLocaleString();
+const R = (sec: number) => {
+  const delta = Math.floor(Date.now() / 1_000) - sec;
+  if (delta < 60) return 'this minute';
+  if (delta < 3_600) return 'this hour';
+  if (delta < 86_400) return 'today';
+  return `${Math.ceil(delta / 86_400)} days ago`;
+};
+
 type MailboxListProps = WithStateProps<'identified'>;
 const MailboxList = ({ state }: MailboxListProps) => {
   const viewingId = useViewStore(x =>
@@ -46,30 +55,29 @@ const MailboxList = ({ state }: MailboxListProps) => {
             <button onClick={fetchMail}>Refresh</button>
           </span>
         </div>
-        <span>
+        <span class="time">
           {mailbox.mail.length} mail retrieved at{' '}
           {mailbox.retrieved.toLocaleTimeString()}
         </span>
       </div>
       <div class="column">
         {mailbox.mail.length === 0 && <div class="m-1">No mail.</div>}
-        {mailbox.mail.map(m => (
-          <button
-            class={`row gap-05 space-between p-05 mail${
-              m.id === viewingId ? ' viewing' : ''
-            }`}
-            key={m.id}
-            onClick={() => setView({ view: 'mail', mail: m })}
-          >
-            <span class="row gap-1 align-items-center">
-              <code>
-                <u>{m.sender.alias}</u>
-              </code>{' '}
-              {m.firstLine}
-            </span>
-            <span>{new Date(m.createdSec * 1000).toLocaleString()}</span>
-          </button>
-        ))}
+        {mailbox.mail.map(m => {
+          const viewingClass = m.id === viewingId ? ' viewing' : '';
+          const className = `row gap-05 space-between align-items-center p-05 mail${viewingClass}`;
+          const handleClick = () => setView({ view: 'mail', mail: m });
+          return (
+            <button class={className} key={m.id} onClick={handleClick}>
+              <span class="row gap-1 align-items-center no-wrap">
+                <code>
+                  <u>{m.sender.alias}</u>
+                </code>
+                <span class="ellipsis">{m.firstLine}</span>
+              </span>
+              <span class="time">{R(m.createdSec)}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -133,7 +141,7 @@ const Contact = ({ contact, full, className }: ContactProps) => {
         <button onClick={handleCopy}>📄</button>
         <button onClick={handleCompose}>📨</button>
       </span>
-      <span class="ellipsis">
+      <span class="ellipsis" style={{ minWidth: '6rem' }}>
         <u>{contact.alias}</u>
         <span style={{ color: '#eee' }}>
           {full && contact.identity.slice(contact.alias.length)}
@@ -165,7 +173,10 @@ const Viewer = ({ state, view }: ViewerProps) => {
   const content = mail ? mail.body : <b>Loading...</b>;
   return (
     <div class="column fill gap-05">
-      <Contact contact={view.sender} full />
+      <div class="row gap-05 space-between align-items-center">
+        <Contact contact={view.sender} full />
+        {mail && <span class="time">{A(mail.createdSec)}</span>}
+      </div>
       <pre class="fill">{content}</pre>
     </div>
   );

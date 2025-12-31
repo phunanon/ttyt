@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -118,7 +118,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        min-width: 6rem;
         padding-right: 1rem;
       }
       .align-items-center {
@@ -164,6 +163,12 @@
       .scroll {
         overflow-y: scroll;
       }
+      .no-wrap {
+        flex-wrap: nowrap;
+      }
+      .time {
+        color: var(--read);
+      }
       @media only screen and (max-width: 512px) {
         h1 {
           display: none;
@@ -175,6 +180,10 @@
     </style>
 
     <script type="module" src="/src/index.tsx"></script>
+
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#444" />
+    <link rel="shortcut icon" href="favicon.svg" type="image/svg" />
   </head>
   <body></body>
 </html>
