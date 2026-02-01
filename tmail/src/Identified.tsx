@@ -3,6 +3,7 @@ import { WithStateProps } from './index.js';
 import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
+import { fetchAddressBook } from './api.js';
 
 const A = (sec: number) => new Date(sec * 1000).toLocaleString();
 const R = (sec: number) => {
@@ -85,6 +86,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
 
 type ComposerProps = WithStateProps<'identified'> & { to?: string };
 const Composer = ({ state, ...props }: ComposerProps) => {
+  const addressBook = useViewStore(x => x.addressBook);
   const [to, setTo] = useState(props.to ?? '');
   const [body, setBody] = useState('');
 
@@ -101,11 +103,41 @@ const Composer = ({ state, ...props }: ComposerProps) => {
     <div class="column gap-05 fill">
       <div class="row gap-05">
         <input
+          id="recipient_identity"
           class="fill"
           placeholder="Recipient alias / identity"
           value={to}
           onChange={e => setTo(e.currentTarget.value)}
         />
+        <div style={{ position: 'relative', display: 'flex' }}>
+          <select
+            id="contact_list"
+            onChange={({ target }) => {
+              if (!target) return;
+              setTo((target as HTMLSelectElement).value);
+            }}
+            style={{ appearance: 'none', width: '2rem' }}
+          >
+            <option></option>
+            {addressBook.map(contact => (
+              <option value={contact.alias}>
+                {contact.alias} {contact.identity.slice(contact.alias.length)}
+              </option>
+            ))}
+          </select>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{}}>👥</div>
+          </div>
+        </div>
         <button onClick={handleSend}>Send</button>
       </div>
       <textarea
@@ -184,28 +216,10 @@ const Viewer = ({ state, view }: ViewerProps) => {
 
 type AddressBookEditorProps = WithStateProps<'identified'> & {};
 const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
-  type AddressBook = { identity: string; alias: string; addedSec: number }[];
-  const [addressBook, setAddressBook] = useState<AddressBook>();
-
-  const fetchAddressBook = async () => {
-    const res = await fetch(`/ttyt/v1/address-book/${state.pubkey.hex}`, {
-      headers: await NonceSigHeaders(state.seckey),
-    });
-    if (res.status !== 200) {
-      alert('Failed to fetch address book: ' + (await res.text()));
-      return;
-    }
-    const addressBook = (await res.json()) as AddressBook;
-    setAddressBook(addressBook);
-  };
-
-  useEffect(() => {
-    fetchAddressBook();
-  }, []);
-
-  if (!addressBook) {
-    return <div class="fill p-1">Loading address book...</div>;
-  }
+  const { book, setBook } = useViewStore(x => ({
+    book: x.addressBook,
+    setBook: x.setAddressBook,
+  }));
 
   const handleNewContact = async () => {
     const contact = prompt('Enter contact alias / identity');
@@ -221,11 +235,12 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
       alert('Failed to add to address book: ' + (await res.text()));
       return;
     }
-    await fetchAddressBook();
+    const book = await fetchAddressBook(state);
+    if (book) setBook(book);
   };
 
   //TODO: handle delete contact
-  const rows = addressBook.map(addr => (
+  const rows = book.map(addr => (
     <div class="row space-between align-items-center gap-05">
       <Contact contact={addr} className="fill" full />
       {new Date(addr.addedSec * 1_000).toLocaleString()}
@@ -253,6 +268,16 @@ const BottomPanel = (props: BottomPanelProps) => {
 };
 
 export const Identified = (props: WithStateProps<'identified'>) => {
+  const setAddressBook = useViewStore(x => x.setAddressBook);
+
+  useEffect(() => {
+    async function fetchAsync() {
+      const book = await fetchAddressBook(props.state);
+      if (book) setAddressBook(book);
+    }
+    fetchAsync();
+  }, []);
+
   return (
     <div class="column" style={{ height: '100vh' }}>
       <MailboxList {...props} key={JSON.stringify(props)} />

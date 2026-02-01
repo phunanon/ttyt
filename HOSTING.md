@@ -11,7 +11,6 @@ cd ..
 pnpm i
 pnpm migrate
 pnpm build
-pnpm migrate
 
 cd tmail
 pnpm build

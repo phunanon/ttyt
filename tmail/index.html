@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -74,6 +74,7 @@
       input,
       textarea,
       button,
+      select,
       pre {
         border: none;
         background-color: #000;
@@ -81,7 +82,8 @@
         padding: 0.5rem;
       }
       input,
-      textarea {
+      textarea,
+      select {
         border: 2px solid var(--input);
         min-width: 3rem;
         resize: none;
@@ -168,6 +170,9 @@
       }
       .time {
         color: var(--read);
+      }
+      select#contact_list {
+        color: #000;
       }
       @media only screen and (max-width: 512px) {
         h1 {

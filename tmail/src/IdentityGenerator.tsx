@@ -120,6 +120,19 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
     );
   }
 
+  const download = (result: PoWResult) => async () => {
+    const blob = new Blob([JSON.stringify(result, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tmail-${result.publicKey.slice(0, 8)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
+  };
+
   const handleSubmit = (result: PoWResult, aliased: boolean) => async () => {
     const endpoint = aliased ? 'alias' : 'identity';
     const res = await fetch(`/ttyt/v1/${endpoint}/${result.publicKey}`, {
@@ -138,6 +151,7 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
 
   const submitButton = 'pkcs8' in progress && (
     <>
+      <button onClick={download(progress)}>Download identity</button>
       <button onClick={handleSubmit(progress, true)}>
         Submit alias (shorter)
       </button>

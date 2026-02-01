@@ -7,3 +7,10 @@ sudo apt update
 sudo apt install caddy
 
 sudo cp Caddyfile /etc/caddy
+sudo systemctl restart caddy
+# journalctl -u caddy
+
+sudo ufw allow 4000/tcp
+sudo ufw allow 4001/tcp
+#sudo ufw allow ssh
+sudo ufw enable
