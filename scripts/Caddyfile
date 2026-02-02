@@ -15,6 +15,7 @@ http://7287425.xyz:4000 {
 7287425.xyz:4001 {
 	reverse_proxy localhost:8000
 	encode
+	header -Via
 }
 
 # Refer to the Caddy docs for more information:

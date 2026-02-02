@@ -3,7 +3,8 @@ import { WithStateProps } from './index.js';
 import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
-import { deleteMail, fetchAddressBook } from './api.js';
+import { deleteContact, deleteMail, fetchAddressBook } from './api.js';
+import { useCheckList } from './hooks/useCheckList.js';
 
 const A = (sec: number) => new Date(sec * 1000).toLocaleString();
 const R = (sec: number) => {
@@ -16,7 +17,7 @@ const R = (sec: number) => {
 
 type MailboxListProps = WithStateProps<'identified'>;
 const MailboxList = ({ state }: MailboxListProps) => {
-  const [selected, setSelected] = useState<number[]>([]);
+  const { selected, evict, handleSelect } = useCheckList<number>();
   const viewingId = useViewStore(x =>
     x.bottom.view === 'mail' ? x.bottom.mail.id : undefined,
   );
@@ -46,25 +47,14 @@ const MailboxList = ({ state }: MailboxListProps) => {
     if (!confirmed) return;
     for (const id of selected) {
       const ok = await deleteMail(state, id);
-      if (ok) setSelected(selected => selected.filter(i => i !== id));
+      if (!ok) continue;
+      evict(id);
       setMailbox(box => {
         if (!box) return;
         return { ...box, mail: box.mail.filter(m => m.id !== id) };
       });
     }
-    await fetchMail();
   };
-
-  const handleSelect =
-    ({ id }: MailMetadata) =>
-    (e: Event) => {
-      setSelected(selected =>
-        selected.includes(id)
-          ? selected.filter(i => i !== id)
-          : [...selected, id],
-      );
-      e.stopPropagation();
-    };
 
   if (!mailbox) {
     return <div class="fill p-1">Loading mailbox...</div>;
@@ -107,7 +97,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
               <span class="row gap-05 align-items-center no-wrap">
                 <input
                   type="checkbox"
-                  onClick={handleSelect(m)}
+                  onClick={handleSelect(m.id)}
                   checked={selected.includes(m.id)}
                 />
                 <span class="row gap-1 align-items-center no-wrap">
@@ -191,11 +181,12 @@ const Composer = ({ state, ...props }: ComposerProps) => {
 };
 
 type ContactProps = {
+  you: string;
   contact: { identity: string; alias: string };
   full?: boolean;
   className?: string;
 };
-const Contact = ({ contact, full, className }: ContactProps) => {
+const Contact = ({ you, contact, full, className }: ContactProps) => {
   const setView = useViewStore(x => x.setBottom);
 
   const handleCopy = () => {
@@ -214,10 +205,11 @@ const Contact = ({ contact, full, className }: ContactProps) => {
         <button onClick={handleCompose}>📨</button>
       </span>
       <span class="ellipsis" style={{ minWidth: '6rem' }}>
-        <u>{contact.alias}</u>
-        <span style={{ color: '#eee' }}>
+        <u class="code">{contact.alias}</u>
+        <span style={{ color: '#eee' }} class="code">
           {full && contact.identity.slice(contact.alias.length)}
         </span>
+        {you === contact.identity ? ' (you)' : null}
       </span>
     </code>
   );
@@ -246,7 +238,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
   return (
     <div class="column fill gap-05">
       <div class="row gap-05 space-between align-items-center">
-        <Contact contact={view.sender} full />
+        <Contact you={state.pubkey.hex} contact={view.sender} full />
         {mail && <span class="time">{A(mail.createdSec)}</span>}
       </div>
       <pre class="fill">{content}</pre>
@@ -256,10 +248,12 @@ const Viewer = ({ state, view }: ViewerProps) => {
 
 type AddressBookEditorProps = WithStateProps<'identified'> & {};
 const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
-  const { book, setBook } = useViewStore(x => ({
+  const { book, setBook, evictContact } = useViewStore(x => ({
     book: x.addressBook,
     setBook: x.setAddressBook,
+    evictContact: x.evictContact,
   }));
+  const { selected, evict, handleSelect } = useCheckList<string>();
 
   const handleNewContact = async () => {
     const contact = prompt('Enter contact alias / identity');
@@ -279,19 +273,42 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
     if (book) setBook(book);
   };
 
-  //TODO: handle delete contact
+  const handleDelete = async () => {
+    const confirmed = confirm(`Delete ${selected.length} contact(s)?`);
+    if (!confirmed) return;
+    for (const identity of selected) {
+      const ok = await deleteContact(state, identity);
+      if (!ok) continue;
+      evict(identity);
+      evictContact(identity);
+    }
+  };
+
+  const buttons = [
+    selected.length ? (
+      <button class="sm" onClick={handleDelete}>
+        🗑️
+      </button>
+    ) : null,
+  ].filter(x => !!x);
+
   const rows = book.map(addr => (
     <div class="row space-between align-items-center gap-05">
-      <Contact contact={addr} className="fill" full />
+      <input
+        type="checkbox"
+        onClick={handleSelect(addr.identity)}
+        checked={selected.includes(addr.identity)}
+      />
+      <Contact you={state.pubkey.hex} contact={addr} className="fill" full />
       {new Date(addr.addedSec * 1_000).toLocaleString()}
-      <button class="sm">🗑️</button>
     </div>
   ));
 
   return (
     <div class="column fill gap-05">
-      <span>
+      <span class="row gap-05 align-items-center">
         <button onClick={handleNewContact}>Add new contact</button>
+        {!!buttons.length && <div class="btn-group">{buttons}</div>}
       </span>
       {rows}
     </div>

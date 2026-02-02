@@ -15,6 +15,7 @@ type ViewStore = {
   addressBook: AddressBook;
   setBottom: (view: SetterArg<BottomPanelView>) => void;
   setAddressBook: (book: AddressBook) => void;
+  evictContact: (identity: string) => void;
 };
 
 export const useViewStore = createWithEqualityFn<ViewStore>()(
@@ -31,6 +32,12 @@ export const useViewStore = createWithEqualityFn<ViewStore>()(
       }
     },
     setAddressBook: addressBook => set({ addressBook }),
+    evictContact: identity =>
+      set({
+        addressBook: get().addressBook.filter(
+          addr => addr.identity !== identity,
+        ),
+      }),
   }),
   shallow,
 );

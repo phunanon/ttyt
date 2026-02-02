@@ -75,5 +75,8 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 **No proscribed encryption.** I have debated this in my mind, but it all comes down to not wanting to enforce one particular algorithm over another, and not wanting to lull people into a false sense of security. I wouldn't want users to think that because an encryption method has been baked in that it makes it all inherently safe - it's not. Encryption should be at the client level, and ideally handled with as few tools and codebases as practicable, independent of the communication provider.
 
+**The UK's Online Safety Act.** I was concerned that hosting TTYT would be in scope of the UK's Online Safety Act, and in violation due to no restriction to who can use the service, little ability to moderate, and no formal way to report abuse. However, [email services are exempt](https://www.legislation.gov.uk/ukpga/2023/50/schedule/1/paragraph/1), though the term &ldquo;email&rdquo; is [undefined](https://www.whatdotheyknow.com/request/definition_of_email_for_online_s?unfold=1&utm_source=chatgpt.com).
+
 TODO:
+
 - think of something better than `X-TTYT-PREV-BODY-SIG` which applies to all operations, and explain it in the rationale
