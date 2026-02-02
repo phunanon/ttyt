@@ -3,7 +3,7 @@ import { WithStateProps } from './index.js';
 import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
-import { fetchAddressBook } from './api.js';
+import { deleteMail, fetchAddressBook } from './api.js';
 
 const A = (sec: number) => new Date(sec * 1000).toLocaleString();
 const R = (sec: number) => {
@@ -16,6 +16,7 @@ const R = (sec: number) => {
 
 type MailboxListProps = WithStateProps<'identified'>;
 const MailboxList = ({ state }: MailboxListProps) => {
+  const [selected, setSelected] = useState<number[]>([]);
   const viewingId = useViewStore(x =>
     x.bottom.view === 'mail' ? x.bottom.mail.id : undefined,
   );
@@ -35,26 +36,60 @@ const MailboxList = ({ state }: MailboxListProps) => {
     const mail = (await res.json()) as MailMetadata[];
     setMailbox({ retrieved: new Date(), mail });
   };
-
   useEffect(() => {
     fetchMail();
   }, []);
+
+  const handleDelete = async (e: Event) => {
+    e.stopPropagation();
+    const confirmed = confirm(`Delete ${selected.length} mail?`);
+    if (!confirmed) return;
+    for (const id of selected) {
+      const ok = await deleteMail(state, id);
+      if (ok) setSelected(selected => selected.filter(i => i !== id));
+      setMailbox(box => {
+        if (!box) return;
+        return { ...box, mail: box.mail.filter(m => m.id !== id) };
+      });
+    }
+    await fetchMail();
+  };
+
+  const handleSelect =
+    ({ id }: MailMetadata) =>
+    (e: Event) => {
+      setSelected(selected =>
+        selected.includes(id)
+          ? selected.filter(i => i !== id)
+          : [...selected, id],
+      );
+      e.stopPropagation();
+    };
 
   if (!mailbox) {
     return <div class="fill p-1">Loading mailbox...</div>;
   }
 
+  const buttons = [
+    selected.length ? (
+      <button class="sm" onClick={handleDelete}>
+        🗑️
+      </button>
+    ) : null,
+  ].filter(x => !!x);
+
   return (
     <div class="fill column scroll">
       <div class="row gap-05 space-between align-items-center p-05">
         <div class="row gap-1 align-items-center">
-          <h1 style={{ marginLeft: '1rem' }}>tmail</h1>
+          <h1 style={{ marginLeft: '0.5rem' }}>tmail</h1>
           <span class="btn-group">
             <button onClick={() => setView({ view: 'address-book' })}>
               Address book
             </button>
             <button onClick={fetchMail}>Refresh</button>
           </span>
+          {!!buttons.length && <span class="btn-group">{buttons}</span>}
         </div>
         <span class="time">
           {mailbox.mail.length} mail retrieved at{' '}
@@ -69,11 +104,16 @@ const MailboxList = ({ state }: MailboxListProps) => {
           const handleClick = () => setView({ view: 'mail', mail: m });
           return (
             <button class={className} key={m.id} onClick={handleClick}>
-              <span class="row gap-1 align-items-center no-wrap">
-                <code>
-                  <u>{m.sender.alias}</u>
-                </code>
-                <span class="ellipsis">{m.firstLine}</span>
+              <span class="row gap-05 align-items-center no-wrap">
+                <input
+                  type="checkbox"
+                  onClick={handleSelect(m)}
+                  checked={selected.includes(m.id)}
+                />
+                <span class="row gap-1 align-items-center no-wrap">
+                  <code>{m.sender.alias.slice(0, 8)}</code>
+                  <span class="ellipsis">{m.firstLine}</span>
+                </span>
               </span>
               <span class="time">{R(m.createdSec)}</span>
             </button>

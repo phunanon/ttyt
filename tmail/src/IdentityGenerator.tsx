@@ -127,7 +127,8 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tmail-${result.publicKey.slice(0, 8)}.json`;
+    const ref = prompt("Reference");
+    a.download = `tmail-${result.publicKey.slice(0, 8)}-${ref}.json`;
     a.click();
     URL.revokeObjectURL(url);
     a.remove();

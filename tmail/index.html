@@ -81,7 +81,7 @@
         color: #fff;
         padding: 0.5rem;
       }
-      input,
+      input:not([type='checkbox']),
       textarea,
       select {
         border: 2px solid var(--input);
@@ -95,6 +95,10 @@
       }
       button:hover {
         border-color: #fff;
+      }
+      input[type='checkbox'] {
+        width: 1.5rem;
+        height: 1.5rem;
       }
       pre {
         border: 2px solid var(--read);
@@ -137,11 +141,11 @@
       }
       .btn-group {
         flex-shrink: 0;
-        > button:first-child {
+        > button:first-child:not(:last-child) {
           border-radius: 0.5rem 0 0 0.5rem;
           border-left: 2px solid var(--act);
         }
-        > button:last-child {
+        > button:last-child:not(:first-child) {
           border-radius: 0 0.5rem 0.5rem 0;
         }
         > button {

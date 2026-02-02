@@ -14,3 +14,15 @@ export const fetchAddressBook = async ({ pubkey, seckey }: Keys) => {
   const addressBook = (await res.json()) as AddressBook;
   return addressBook;
 };
+
+export const deleteMail = async ({ pubkey, seckey }: Keys, id: number) => {
+  const res = await fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
+    method: 'DELETE',
+    headers: await NonceSigHeaders(seckey),
+  });
+  if (res.status !== 200) {
+    alert('Failed to delete mail: ' + (await res.text()));
+    return false;
+  }
+  return true;
+};
