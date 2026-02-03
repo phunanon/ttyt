@@ -13,10 +13,10 @@ TTYT is a HTTPS server API offering these features:
 
 - Generate an identity with only a proof-of-work challenge
 - Manage an address book of other identities
-- Send data to any identity
+- Send mail to any identity
   - the sender will have to complete a proof-of-work challenge if not in the recipient's address book
-- Read data sent to your identity
-- Clear data sent to your identity
+- Read mail sent to your identity
+- Clear mail sent to your identity
 
 Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287425.xyz`
 
@@ -40,8 +40,6 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
   - Headers if `[identity from]` is not in the address book of `[identity to]`:
     - `X-TTYT-NONCE`: the server nonce used
     - `X-TTYT-NONCE-SIG`: `X-TTYT-NONCE` signed by `[identity from]`, satisfying [proof-of-work](#proof-of-work).
-  - Optional headers:
-    - `X-TTYT-PREV-BODY-SIG`: sending will fail if the body signature of the last mail sent from this identity does not match this header
 
 ### Authenticated endpoints
 
@@ -61,11 +59,9 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 ### Rationale
 
-**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that I expect they would jeopardise the private key itself let alone replayed requests.
+**Proof-of-work.** I accept the reality that people mint new emails even with providers like Google without much stopping them. And so this is embraced: you can have an identity, and send mail, so long as you sacrifice some compute time.
 
-**Proof-of-work.** I accept the reality that people mint new emails even with providers like Google without much stopping them. And so this is embraced: you can have an identity, and send mail, so long as you sacrifice some compute time. Ideally I'd be using a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful, like proof-of-space for storing encrypted chunks of the database; or something financially beneficial to me, like mining crypto-currency; or something ethical, like doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, and are always in the address books of your recipients.
-
-**Attachments.** TTYT does not have a concept of attachments as these complicate client implementations, and put strain on email providers. Files should instead be served by third-party providers, normalising the exchange of lightweight hashes and secret keys.
+**Attachments.** TTYT does not have a concept of attachments as these complicate client implementations, and put strain on providers. Files should instead be served by third-party providers, normalising the exchange of lightweight hashes and secret keys.
 
 **Rich text.** HTML has enabled email to deliver (ideally) accessible, structured, potentially branded content. However, with the advent of LLMs, information can now be automatically extracted from weakly or unconventionally structured documents, increasingly even offline.
 
@@ -77,6 +73,19 @@ Requests must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers, which is a 
 
 **The UK's Online Safety Act.** I was concerned that hosting TTYT would be in scope of the UK's Online Safety Act, and in violation due to no restriction to who can use the service, little ability to moderate, and no formal way to report abuse. However, [email services are exempt](https://www.legislation.gov.uk/ukpga/2023/50/schedule/1/paragraph/1), though the term &ldquo;email&rdquo; is [undefined](https://www.whatdotheyknow.com/request/definition_of_email_for_online_s?unfold=1&utm_source=chatgpt.com).
 
-TODO:
+**No custom aliases.** There is no technical reason preventing each identity from having a custom alias. However, it does reduce exposure to GDPR, and does mitigate phishing by encouraging users to exactly identify senders.
 
-- think of something better than `X-TTYT-PREV-BODY-SIG` which applies to all operations, and explain it in the rationale
+### Problems & complications
+
+**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that I expect they would jeopardise the private key itself let alone replayed requests.
+
+**Proof-of-work.** Ideally TTYT would use a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful like proof-of-space, perhaps for storing encrypted chunks of the database; or something financially beneficial to providers like mining crypto-currency; or something ethical like doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, and are always in the address books of your recipients.
+
+**Silently compromised identity.** The original owner of an identity would have no way to know for sure if their private key is used maliciously. The simplest indicator could be a queryable counter of each authenticated action per identity.
+
+**Per-server identity.** Individuals and organisations are able to open an account with one traditional email provider and then be able to send and receive mail between any other email provider. The more reputable the provider, the less likely emails are to bounce. With TTYT it is necessary to have an indentity registered per server as mail is not exchanged between servers.
+
+### TODO:
+
+- migrate to Prisma 7
+- think about arbitrary address book entries, which would perhaps solve the per-server identity issue

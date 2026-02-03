@@ -20,20 +20,6 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
     return;
   }
 
-  //Optional X-TTYT-PREV-BODY-SIG header
-  const prevBodySigHeader = req.headers['x-ttyt-prev-body-sig'];
-  if (prevBodySigHeader) {
-    const prevBodySig = `${prevBodySigHeader}`;
-    const lastMail = await prisma.mail.findFirst({
-      where: { bodySig: prevBodySig },
-      orderBy: { createdSec: 'desc' },
-    });
-    if (lastMail?.bodySig !== prevBodySig) {
-      res.status(412).end('X-TTYT-PREV-BODY-SIG does not match previous mail');
-      return;
-    }
-  }
-
   const passesChallenge = await (async () => {
     const addressBookEntry = await prisma.addressBookEntry.findFirst({
       where: { ownerId: recipient.id, contactId: sender.id },
