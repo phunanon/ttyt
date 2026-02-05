@@ -1,7 +1,7 @@
 export type MailMetadata = {
   id: number;
-  createdSec: number;
-  sender: { identity: string; alias: string };
+  sentSec: number;
+  identity: string;
   firstLine: string;
 };
 export type Mail = MailMetadata & {
@@ -10,5 +10,5 @@ export type Mail = MailMetadata & {
 };
 export type BottomPanelView =
   | { view: 'compose'; to?: string }
-  | { view: 'address-book' }
+  | { view: 'contacts' }
   | { view: 'mail'; mail: MailMetadata };

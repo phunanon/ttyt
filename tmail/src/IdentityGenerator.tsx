@@ -101,25 +101,6 @@ type ProgressPanelProps = {
 };
 
 const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
-  const [pkcs8, setPkcs8] = useState<string>();
-
-  const handleProceed = (pkcs8: string) => async () =>
-    set({ page: 'identified', ...(await IngestSeckey(pkcs8)) });
-
-  if (pkcs8) {
-    return (
-      <div class="column gap-05">
-        <span>Submitted! Your private key (keep this safe):</span>
-        <code>
-          <u>{pkcs8}</u>
-        </code>
-        <button onClick={handleProceed(pkcs8)}>
-          Proceed with this identity.
-        </button>
-      </div>
-    );
-  }
-
   const download = (result: PoWResult) => async () => {
     const blob = new Blob([JSON.stringify(result, null, 2)], {
       type: 'application/json',
@@ -127,16 +108,15 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const ref = prompt("Reference");
+    const ref = prompt('Reference');
     a.download = `tmail-${result.publicKey.slice(0, 8)}-${ref}.json`;
     a.click();
     URL.revokeObjectURL(url);
     a.remove();
   };
 
-  const handleSubmit = (result: PoWResult, aliased: boolean) => async () => {
-    const endpoint = aliased ? 'alias' : 'identity';
-    const res = await fetch(`/ttyt/v1/${endpoint}/${result.publicKey}`, {
+  const handleSubmit = (result: PoWResult) => async () => {
+    const res = await fetch(`/ttyt/v1/identity/${result.publicKey}`, {
       method: 'PUT',
       headers: {
         'X-TTYT-NONCE': result.nonce,
@@ -144,7 +124,7 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
       },
     });
     if (res.status === 201) {
-      setPkcs8(result.pkcs8);
+      set({ page: 'identified', ...(await IngestSeckey(result.pkcs8)) });
     } else {
       alert(`Failed to submit identity: ${res.status} ${await res.text()}`);
     }
@@ -153,12 +133,7 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
   const submitButton = 'pkcs8' in progress && (
     <>
       <button onClick={download(progress)}>Download identity</button>
-      <button onClick={handleSubmit(progress, true)}>
-        Submit alias (shorter)
-      </button>
-      <button onClick={handleSubmit(progress, false)}>
-        Submit identity (obscurer)
-      </button>
+      <button onClick={handleSubmit(progress)}>Submit identity</button>
     </>
   );
   return (

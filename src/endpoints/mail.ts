@@ -6,37 +6,31 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
   const bodySig = await VerifyBodySig(req, res, from);
   if (!bodySig) return;
 
-  const parties = await prisma.identity.findMany({
-    where: { OR: [{ identity: { in: [from, to] } }, { alias: to }] },
-  });
-  const sender = parties.find(p => p.identity === from);
-  const recipient = parties.find(p => p.identity === to || p.alias === to);
-  if (!sender) {
-    res.status(404).end('[identity from] not found');
-    return;
-  }
+  const where = to.length === 64 ? { identity: to } : { alias: to };
+  const recipient = await prisma.identity.findUnique({ where });
   if (!recipient) {
-    res.status(404).end('[identity to] not found');
+    res.status(404).end('[recipient] not found');
     return;
   }
 
   const passesChallenge = await (async () => {
-    const addressBookEntry = await prisma.addressBookEntry.findFirst({
-      where: { ownerId: recipient.id, contactId: sender.id },
+    const contact = await prisma.contact.findFirst({
+      where: { ownerId: recipient.id, identity: from },
     });
-    if (addressBookEntry) return true;
-    return await VerifyNonceSig(req, res, sender.identity);
+    if (contact) return true;
+    return await VerifyNonceSig(req, res, from);
   })();
   if (!passesChallenge) return;
 
   const body = `${req.body}`;
+  //TODO: consider resolving alias and putting it on Mail
   await prisma.mail.create({
     data: {
-      createdSec: Math.floor(Date.now() / 1000),
+      sentSec: Math.floor(Date.now() / 1000),
       firstLine: getFirstLine(body),
       body,
       bodySig,
-      sender: { connect: { id: sender.id } },
+      identity: from,
       recipient: { connect: { id: recipient.id } },
     },
   });
@@ -58,14 +52,14 @@ app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
   const mail = await prisma.mail.findMany({
     select: {
       id: true,
-      createdSec: true,
+      sentSec: true,
       body: true,
       bodySig: true,
       firstLine: true,
-      sender: { select: { identity: true, alias: true } },
+      identity: true,
     },
-    where: { recipient: { identity }, createdSec: { gte, lte } },
-    orderBy: { createdSec: 'desc' },
+    where: { recipient: { identity }, sentSec: { gte, lte } },
+    orderBy: { sentSec: 'desc' },
     take: 100,
   });
   res.json(mail);
@@ -80,12 +74,7 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
   }
   if (!VerifyNonceSig(req, res, req.params.identity, false)) return;
   const mail = await prisma.mail.findFirst({
-    select: {
-      createdSec: true,
-      body: true,
-      bodySig: true,
-      sender: { select: { identity: true, alias: true } },
-    },
+    select: { sentSec: true, body: true, bodySig: true, identity: true },
     where: { id, recipient: { identity } },
   });
   if (!mail) {

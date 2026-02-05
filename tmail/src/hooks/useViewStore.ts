@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 
 type SetterArg<T> = T | ((value: T) => T);
 
-export type AddressBook = {
+export type Contacts = {
   identity: string;
   alias: string;
   addedSec: number;
@@ -12,16 +12,16 @@ export type AddressBook = {
 
 type ViewStore = {
   bottom: BottomPanelView;
-  addressBook: AddressBook;
+  contacts: Contacts;
   setBottom: (view: SetterArg<BottomPanelView>) => void;
-  setAddressBook: (book: AddressBook) => void;
+  setContacts: (contacts: Contacts) => void;
   evictContact: (identity: string) => void;
 };
 
 export const useViewStore = createWithEqualityFn<ViewStore>()(
   (set, get) => ({
     bottom: { view: 'compose' },
-    addressBook: [],
+    contacts: [],
     setBottom: view => {
       const prev = get().bottom;
       const bottom = typeof view === 'function' ? view(prev) : view;
@@ -31,11 +31,11 @@ export const useViewStore = createWithEqualityFn<ViewStore>()(
         set({ bottom });
       }
     },
-    setAddressBook: addressBook => set({ addressBook }),
+    setContacts: contacts => set({ contacts }),
     evictContact: identity =>
       set({
-        addressBook: get().addressBook.filter(
-          addr => addr.identity !== identity,
+        contacts: get().contacts.filter(
+          contact => contact.identity !== identity,
         ),
       }),
   }),

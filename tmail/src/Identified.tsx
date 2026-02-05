@@ -3,10 +3,14 @@ import { WithStateProps } from './index.js';
 import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
-import { deleteContact, deleteMail, fetchAddressBook } from './api.js';
+import { deleteContact, deleteMail, fetchContacts } from './api.js';
 import { useCheckList } from './hooks/useCheckList.js';
 
-const A = (sec: number) => new Date(sec * 1000).toLocaleString();
+const A = (sec: number) =>
+  new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'full',
+    timeStyle: 'long',
+  }).format(new Date(sec * 1000));
 const R = (sec: number) => {
   const delta = Math.floor(Date.now() / 1_000) - sec;
   if (delta < 60) return 'this minute';
@@ -74,8 +78,8 @@ const MailboxList = ({ state }: MailboxListProps) => {
         <div class="row gap-1 align-items-center">
           <h1 style={{ marginLeft: '0.5rem' }}>tmail</h1>
           <span class="btn-group">
-            <button onClick={() => setView({ view: 'address-book' })}>
-              Address book
+            <button onClick={() => setView({ view: 'contacts' })}>
+              Contacts
             </button>
             <button onClick={fetchMail}>Refresh</button>
           </span>
@@ -101,11 +105,11 @@ const MailboxList = ({ state }: MailboxListProps) => {
                   checked={selected.includes(m.id)}
                 />
                 <span class="row gap-1 align-items-center no-wrap">
-                  <code>{m.sender.alias.slice(0, 8)}</code>
+                  <code>{m.identity.slice(0, 8)}</code>
                   <span class="ellipsis">{m.firstLine}</span>
                 </span>
               </span>
-              <span class="time">{R(m.createdSec)}</span>
+              <span class="time">{R(m.sentSec)}</span>
             </button>
           );
         })}
@@ -116,7 +120,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
 
 type ComposerProps = WithStateProps<'identified'> & { to?: string };
 const Composer = ({ state, ...props }: ComposerProps) => {
-  const addressBook = useViewStore(x => x.addressBook);
+  const contacts = useViewStore(x => x.contacts);
   const [to, setTo] = useState(props.to ?? '');
   const [body, setBody] = useState('');
 
@@ -149,7 +153,7 @@ const Composer = ({ state, ...props }: ComposerProps) => {
             style={{ appearance: 'none', width: '2rem' }}
           >
             <option></option>
-            {addressBook.map(contact => (
+            {contacts.map(contact => (
               <option value={contact.alias}>
                 {contact.alias} {contact.identity.slice(contact.alias.length)}
               </option>
@@ -238,19 +242,23 @@ const Viewer = ({ state, view }: ViewerProps) => {
   return (
     <div class="column fill gap-05">
       <div class="row gap-05 space-between align-items-center">
-        <Contact you={state.pubkey.hex} contact={view.sender} full />
-        {mail && <span class="time">{A(mail.createdSec)}</span>}
+        <Contact
+          you={state.pubkey.hex}
+          contact={{ identity: view.identity, alias: view.identity }}
+          full
+        />
+        {mail && <span class="time">{A(mail.sentSec)}</span>}
       </div>
       <pre class="fill">{content}</pre>
     </div>
   );
 };
 
-type AddressBookEditorProps = WithStateProps<'identified'> & {};
-const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
-  const { book, setBook, evictContact } = useViewStore(x => ({
-    book: x.addressBook,
-    setBook: x.setAddressBook,
+type ContactsEditorProps = WithStateProps<'identified'> & {};
+const ContactsEditor = ({ state }: ContactsEditorProps) => {
+  const { contacts, setContacts, evictContact } = useViewStore(x => ({
+    contacts: x.contacts,
+    setContacts: x.setContacts,
     evictContact: x.evictContact,
   }));
   const { selected, evict, handleSelect } = useCheckList<string>();
@@ -259,18 +267,18 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
     const contact = prompt('Enter contact alias / identity');
     if (!contact) return;
     const res = await fetch(
-      `/ttyt/v1/address-book/${state.pubkey.hex}/${contact}`,
+      `/ttyt/v1/contacts/${state.pubkey.hex}/${contact}`,
       {
         method: 'PUT',
         headers: await NonceSigHeaders(state.seckey),
       },
     );
     if (res.status !== 201) {
-      alert('Failed to add to address book: ' + (await res.text()));
+      alert('Failed to add to contacts: ' + (await res.text()));
       return;
     }
-    const book = await fetchAddressBook(state);
-    if (book) setBook(book);
+    const contacts = await fetchContacts(state);
+    if (contacts) setContacts(contacts);
   };
 
   const handleDelete = async () => {
@@ -292,15 +300,15 @@ const AddressBookEditor = ({ state }: AddressBookEditorProps) => {
     ) : null,
   ].filter(x => !!x);
 
-  const rows = book.map(addr => (
+  const rows = contacts.map(contact => (
     <div class="row space-between align-items-center gap-05">
       <input
         type="checkbox"
-        onClick={handleSelect(addr.identity)}
-        checked={selected.includes(addr.identity)}
+        onClick={handleSelect(contact.identity)}
+        checked={selected.includes(contact.identity)}
       />
-      <Contact you={state.pubkey.hex} contact={addr} className="fill" full />
-      {new Date(addr.addedSec * 1_000).toLocaleString()}
+      <Contact you={state.pubkey.hex} contact={contact} className="fill" full />
+      {new Date(contact.addedSec * 1_000).toLocaleString()}
     </div>
   ));
 
@@ -320,17 +328,17 @@ const BottomPanel = (props: BottomPanelProps) => {
   const view = useViewStore(x => x.bottom);
   if (view.view === 'mail') return <Viewer {...props} view={view.mail} />;
   if (view.view === 'compose') return <Composer {...props} to={view.to} />;
-  if (view.view === 'address-book') return <AddressBookEditor {...props} />;
+  if (view.view === 'contacts') return <ContactsEditor {...props} />;
   return '???';
 };
 
 export const Identified = (props: WithStateProps<'identified'>) => {
-  const setAddressBook = useViewStore(x => x.setAddressBook);
+  const setContacts = useViewStore(x => x.setContacts);
 
   useEffect(() => {
     async function fetchAsync() {
-      const book = await fetchAddressBook(props.state);
-      if (book) setAddressBook(book);
+      const contacts = await fetchContacts(props.state);
+      if (contacts) setContacts(contacts);
     }
     fetchAsync();
   }, []);

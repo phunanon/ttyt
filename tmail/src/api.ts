@@ -1,18 +1,18 @@
 import { NonceSigHeaders } from './crypto';
-import { AddressBook } from './hooks/useViewStore';
+import { Contacts } from './hooks/useViewStore';
 
 type Keys = { seckey: Seckey; pubkey: Pubkey };
 
-export const fetchAddressBook = async ({ pubkey, seckey }: Keys) => {
-  const res = await fetch(`/ttyt/v1/address-book/${pubkey.hex}`, {
+export const fetchContacts = async ({ pubkey, seckey }: Keys) => {
+  const res = await fetch(`/ttyt/v1/contacts/${pubkey.hex}`, {
     headers: await NonceSigHeaders(seckey),
   });
   if (res.status !== 200) {
-    alert('Failed to fetch address book: ' + (await res.text()));
+    alert('Failed to fetch contacts: ' + (await res.text()));
     return;
   }
-  const addressBook = (await res.json()) as AddressBook;
-  return addressBook;
+  const contacts = (await res.json()) as Contacts;
+  return contacts;
 };
 
 export const deleteMail = async ({ pubkey, seckey }: Keys, id: number) => {
@@ -27,7 +27,7 @@ export const deleteMail = async ({ pubkey, seckey }: Keys, id: number) => {
 };
 
 export const deleteContact = async ({ pubkey, seckey }: Keys, id: string) => {
-  const res = await fetch(`/ttyt/v1/address-book/${pubkey.hex}/${id}`, {
+  const res = await fetch(`/ttyt/v1/contacts/${pubkey.hex}/${id}`, {
     method: 'DELETE',
     headers: await NonceSigHeaders(seckey),
   });

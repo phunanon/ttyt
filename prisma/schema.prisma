@@ -9,35 +9,32 @@ generator client {
 }
 
 model Identity {
-  id                   Int                @id @default(autoincrement())
-  createdSec           Int
-  identity             String             @unique
-  alias                String             @unique
-  addressBookEntries   AddressBookEntry[] @relation("Owner")
-  inAddressBookEntries AddressBookEntry[] @relation("Contact")
-  sentMail             Mail[]             @relation("Sender")
-  receivedMail         Mail[]             @relation("Recipient")
+  id           Int       @id @default(autoincrement())
+  createdSec   Int
+  identity     String    @unique
+  alias        String    @unique
+  contacts     Contact[] @relation("Owner")
+  receivedMail Mail[]    @relation("Recipient")
 }
 
-model AddressBookEntry {
-  id         Int      @id @default(autoincrement())
-  createdSec Int
-  ownerId    Int
-  contactId  Int
-  owner      Identity @relation("Owner", fields: [ownerId], references: [id], onDelete: Cascade)
-  contact    Identity @relation("Contact", fields: [contactId], references: [id], onDelete: Cascade)
+model Contact {
+  id       Int      @id @default(autoincrement())
+  addedSec Int
+  ownerId  Int
+  identity String
+  alias    String
+  owner    Identity @relation("Owner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  @@unique([ownerId, contactId])
+  @@unique([ownerId, identity])
 }
 
 model Mail {
   id          Int      @id @default(autoincrement())
-  createdSec  Int
-  senderId    Int
+  sentSec     Int
+  identity    String
   recipientId Int
   body        String
   bodySig     String
   firstLine   String
-  sender      Identity @relation("Sender", fields: [senderId], references: [id])
   recipient   Identity @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
 }

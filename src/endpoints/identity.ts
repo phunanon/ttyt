@@ -1,8 +1,6 @@
-import { Request, Response } from 'express';
 import { app, prisma, VerifyNonceSig } from '../infrastructure';
 
-type Req = Request<{ identity: string }>;
-async function HandleSubmission(req: Req, res: Response, aliased: boolean) {
+app.put('/ttyt/v1/identity/:identity', async (req, res) => {
   const { identity } = req.params;
 
   if (!(await VerifyNonceSig(req, res, identity))) return;
@@ -16,35 +14,25 @@ async function HandleSubmission(req: Req, res: Response, aliased: boolean) {
     }
   }
 
-  let alias = aliased ? identity.slice(0, 1) : identity;
-  if (aliased) {
-    for (let i = 0; i < identity.length; ++i) {
-      const exists = await prisma.identity.findUnique({ where: { alias } });
-      if (exists) {
-        alias = identity.slice(0, i + 1);
-      } else {
-        break;
-      }
+  let alias = identity.slice(0, 1);
+  for (let i = 0; i < identity.length; ++i) {
+    const exists = await prisma.identity.findUnique({ where: { alias } });
+    if (exists) {
+      alias = identity.slice(0, i + 1);
+    } else {
+      break;
     }
   }
 
-  const createdSec = Math.floor(Date.now() / 1_000);
+  const sec = Math.floor(Date.now() / 1_000);
   const dbIdentity = await prisma.identity.upsert({
     where: { identity },
-    create: { createdSec, identity, alias },
+    create: { createdSec: sec, identity, alias },
     update: {},
   });
-  await prisma.addressBookEntry.create({
-    data: { createdSec, ownerId: dbIdentity.id, contactId: dbIdentity.id },
+  await prisma.contact.create({
+    data: { addedSec: sec, ownerId: dbIdentity.id, identity, alias },
   });
 
-  res.status(201).end();
-}
-
-app.put('/ttyt/v1/identity/:identity', async (req, res) => {
-  await HandleSubmission(req, res, false);
-});
-
-app.put('/ttyt/v1/alias/:identity', async (req, res) => {
-  await HandleSubmission(req, res, true);
+  res.status(201).end(alias);
 });

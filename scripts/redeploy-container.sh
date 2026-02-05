@@ -4,7 +4,7 @@ pnpm build
 podman stop ttyt
 podman rm ttyt
 podman build -t ttyt .
-podman run -d --rm \
+podman run -d \
   --name ttyt \
   -p 8000:8000 \
   -v ./prisma:/app/prisma \
