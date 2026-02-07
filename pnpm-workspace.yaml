@@ -1,7 +1,11 @@
+packages:
+  - tmail
+
+ignoredBuiltDependencies:
+  - esbuild
+
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
+  - better-sqlite3
   - prisma
-
-packages:
-  - 'tmail'

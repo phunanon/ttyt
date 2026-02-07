@@ -74,8 +74,6 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 **Rich text.** HTML has enabled email to deliver (ideally) accessible, structured, potentially branded content. However, with the advent of LLMs, information can now be automatically extracted from weakly or unconventionally structured documents, increasingly even offline.
 
-**No "Sent".** A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me being sent spam from those credentials before I can revoke the public key or remove it from my stable identity's contacts.
-
 **No contact references.** Remembering address references can be achieved in client implementations or through traditional clerical means. This way, servers aren't encouraged to hold more information than necessary.
 
 **No proscribed encryption.** I have debated this in my mind, but it all comes down to not wanting to enforce one particular algorithm over another, and not wanting to lull people into a false sense of security. I wouldn't want users to think that because an encryption method has been baked in that it makes it all inherently safe - it's not. Encryption should be at the client level, and ideally handled with as few tools and codebases as practicable, independent of the communication provider.
@@ -84,7 +82,11 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 **No custom aliases.** There is no technical reason preventing each identity from having a custom alias. However, it does reduce exposure to GDPR, and does mitigate phishing by encouraging users to exactly identify senders.
 
+**Data agency.** Unlike traditional email, senders can leverage existing technology to both protect and anonymise the delivery of their mail. It is possible to proxy mail sends through a third-party service which can only instruct the recipient server of mail to be sent exactly as intended. And you only need to trust one service (aside from ISPs and their partners) - the recipient server - when sending mail. Ideally, with how simple TTYT is to host, you would run your own server instance.
+
 **Anonymous senders.** I realised that if it were not possible to add unregistered identities to one's contacts then an individual or organisation would have to register their own identity with the server to send mail, as TTYT does not exchange mail between servers like traditional email providers. This would be antithetical to the aim of solving "provider lock-in", causing it in a different way. However, there are a number of side-effects to allowing unregistered senders: it enables someone to send mail without being registered _anywhere_. One could simply generate an Ed25519 keypair, inform a willing recipient whom would add the public key to their contacts, and solely use the send endpoint of a server instance; it also causes recipients to be unable to reply to senders unless the sender is registered with a TTYT server and reveals which server it is. I debated in my mind whether senders can only be anonymous when in contacts, but decided instead to provide the `contacts/[identity]/only` endpoint, as if a user is truly malicious they would willingly complete proof-of-work for both registering an identity and sending mail anyway. I also debated in my mind having a proof-of-work challenge for adding external identities to contacts, as it's exposing the server to higher traffic, but this would greatly increase the burden upon the user, and the server can still impose rate limits per identity.
+
+**No "Sent".** TTYT does not provide a mechanism for querying your sent mail. A use-case I personally see for TTYT is using it to send myself notes for my diary throughout the day. I intend to have a floating pair of credentials that I use on portable devices, in which I send notes to my stable credentials only accessed from a more trusted machine. If my floating credentials are leaked, the only risk is me (or others) being sent spam from those credentials before I can revoke the public key or remove it from my stable identity's contacts. Furthermore, not all mail is between users of the same server instance. I encourage the clerical exercise of recording sent mail to be implemented at the client level.
 
 **"TTYT".** I originally desired a service which works via the terminal, so TTYT is meant to mean "TTY Talk". So, I hope to eventually write a TUI to complement the Preact client.
 
@@ -100,7 +102,6 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 ### TODO:
 
-- migrate to Prisma 7
 - per-identity rate limits and usage quotas (e.g. one action per second, mail retained for up to ten years, identities revoked if not authenticated for ten years)
 - don't leak unhandled exceptions
 - consider base36 or base64 identities/aliases

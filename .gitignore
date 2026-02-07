@@ -2,3 +2,4 @@ node_modules
 prisma/migrations
 prisma/db.db
 dist
+src/generated/

@@ -1,8 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import express, { Response, Request } from 'express';
 import * as Crypto from './crypto';
 
-export const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/db.db' });
+export const prisma = new PrismaClient({adapter});
 export const app = express();
 export const sec = () => Math.floor(Date.now() / 1_000);
 
@@ -78,6 +80,11 @@ app.use('/tmail', express.static('www'));
 
 const PORT = process.env.PORT || 8000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+process.on('SIGTERM', () => {
+  server.close();
+  process.exit(0);
 });
