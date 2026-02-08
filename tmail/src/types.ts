@@ -2,6 +2,7 @@ export type MailMetadata = {
   id: number;
   sentSec: number;
   identity: string;
+  alias?: string;
   firstLine: string;
 };
 export type Mail = MailMetadata & {

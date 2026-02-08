@@ -97,7 +97,9 @@ const MailboxList = ({ state }: MailboxListProps) => {
                   checked={selected.includes(m.id)}
                 />
                 <span class="row gap-1 align-items-center no-wrap">
-                  <code>{m.identity.slice(0, 8)}</code>
+                  <span style={{ minWidth: '5.5rem', textAlign: 'left' }}>
+                    <Identity contact={m} len={8} full />
+                  </span>
                   <span class="ellipsis">{m.firstLine}</span>
                 </span>
               </span>
@@ -176,13 +178,26 @@ const Composer = ({ state, ...props }: ComposerProps) => {
   );
 };
 
-type ContactProps = {
-  you: string;
-  contact: { identity: string; alias: string };
+type IdentityProps = {
+  contact: { identity: string; alias?: string };
   full?: boolean;
-  className?: string;
+  len?: number;
 };
-const Contact = ({ you, contact, full, className }: ContactProps) => {
+const Identity = ({ contact, full, len }: IdentityProps) => {
+  const alias = (contact.alias ?? '').slice(0, len);
+  const rest = contact.identity.slice(alias.length, len);
+  return (
+    <>
+      {alias && <u class="code">{alias}</u>}
+      <span style={{ color: '#eee' }} class="code">
+        {full && rest}
+      </span>
+    </>
+  );
+};
+
+type ContactProps = IdentityProps & { you: string; className?: string };
+const Contact = ({ you, contact, className, ...props }: ContactProps) => {
   const setView = useViewStore(x => x.setBottom);
 
   const handleCopy = () => {
@@ -191,7 +206,7 @@ const Contact = ({ you, contact, full, className }: ContactProps) => {
   };
 
   const handleCompose = () => {
-    setView({ view: 'compose', to: contact.alias });
+    setView({ view: 'compose', to: contact.alias ?? contact.identity });
   };
 
   return (
@@ -201,10 +216,7 @@ const Contact = ({ you, contact, full, className }: ContactProps) => {
         <button onClick={handleCompose}>📨</button>
       </span>
       <span class="ellipsis" style={{ minWidth: '6rem' }}>
-        <u class="code">{contact.alias}</u>
-        <span style={{ color: '#eee' }} class="code">
-          {full && contact.identity.slice(contact.alias.length)}
-        </span>
+        <Identity {...{ contact, ...props }} />
         {you === contact.identity ? ' (you)' : null}
       </span>
     </code>
@@ -229,7 +241,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
       <div class="row gap-05 space-between align-items-center">
         <Contact
           you={state.pubkey.hex}
-          contact={{ identity: view.identity, alias: view.identity }}
+          contact={{ identity: view.identity, alias: view.alias }}
           full
         />
         {mail && <span class="time">{A(mail.sentSec)}</span>}

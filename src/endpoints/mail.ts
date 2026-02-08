@@ -25,7 +25,9 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
   if (!passesChallenge) return;
 
   const body = `${req.body}`;
-  //TODO: consider resolving alias and putting it on Mail
+  const alias = await prisma.identity
+    .findUnique({ where: { identity: from }, select: { alias: true } })
+    .then(x => x?.alias);
   await prisma.mail.create({
     data: {
       sentSec: Math.floor(Date.now() / 1000),
@@ -33,6 +35,7 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
       body,
       bodySig,
       identity: from,
+      alias,
       recipient: { connect: { id: recipient.id } },
     },
   });
@@ -60,6 +63,7 @@ app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
       bodySig: true,
       firstLine: true,
       identity: true,
+      alias: true,
     },
     where: { recipient: { identity }, sentSec: { gte, lte } },
     orderBy: { sentSec: 'desc' },
@@ -78,7 +82,13 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
   }
   if (!VerifyNonceSig(req, res, req.params.identity, false)) return;
   const mail = await prisma.mail.findFirst({
-    select: { sentSec: true, body: true, bodySig: true, identity: true },
+    select: {
+      sentSec: true,
+      body: true,
+      bodySig: true,
+      identity: true,
+      alias: true,
+    },
     where: { id, recipient: { identity } },
   });
   if (!mail) {
