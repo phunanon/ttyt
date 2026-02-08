@@ -4,6 +4,7 @@ import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
 import { deleteContact, deleteMail, fetchContacts } from './api.js';
+import { fetchMailById, fetchAllMail } from './api.js';
 import { useCheckList } from './hooks/useCheckList.js';
 
 const A = (sec: number) =>
@@ -31,19 +32,10 @@ const MailboxList = ({ state }: MailboxListProps) => {
   const [mailbox, setMailbox] = useState<Mailbox>();
 
   const fetchMail = async () => {
-    const res = await fetch(`/ttyt/v1/mail/${state.pubkey.hex}/0/9999999999`, {
-      headers: await NonceSigHeaders(state.seckey),
-    });
-    if (res.status !== 200) {
-      alert('Failed to fetch mail: ' + (await res.text()));
-      return;
-    }
-    const mail = (await res.json()) as MailMetadata[];
-    setMailbox({ retrieved: new Date(), mail });
+    const mail = await fetchAllMail(state);
+    if (mail) setMailbox({ retrieved: new Date(), mail });
   };
-  useEffect(() => {
-    fetchMail();
-  }, []);
+  useEffect(() => void fetchMail(), []);
 
   const handleDelete = async (e: Event) => {
     e.stopPropagation();
@@ -225,15 +217,8 @@ const Viewer = ({ state, view }: ViewerProps) => {
 
   useEffect(() => {
     const fetchMail = async () => {
-      const res = await fetch(`/ttyt/v1/mail/${state.pubkey.hex}/${view.id}`, {
-        headers: await NonceSigHeaders(state.seckey),
-      });
-      if (res.status !== 200) {
-        alert('Failed to fetch mail: ' + (await res.text()));
-        return;
-      }
-      const mail = (await res.json()) as Mail;
-      setMail(mail);
+      const mail = await fetchMailById(state, view.id);
+      if (mail) setMail(mail);
     };
     fetchMail();
   }, [view.id]);
