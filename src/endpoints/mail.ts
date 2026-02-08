@@ -1,7 +1,9 @@
-import { app, prisma, VerifyBodySig, VerifyNonceSig } from '../infrastructure';
+import { app, prisma } from '../infrastructure';
+import { RateLimited, VerifyBodySig, VerifyNonceSig } from '../infrastructure';
 
 app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
   const { from, to } = req.params;
+  if (RateLimited(from, res)) return;
 
   const bodySig = await VerifyBodySig(req, res, from);
   if (!bodySig) return;
@@ -42,6 +44,7 @@ app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
   const gte = Number(req.params.start);
   const lte = Number(req.params.end);
   const { identity } = req.params;
+  if (RateLimited(identity, res)) return;
   if (!Number.isInteger(gte) || !Number.isInteger(lte)) {
     res
       .status(400)
@@ -68,6 +71,7 @@ app.get('/ttyt/v1/mail/:identity/:start/:end', async (req, res) => {
 app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { identity } = req.params;
+  if (RateLimited(identity, res)) return;
   if (!Number.isInteger(id)) {
     res.status(400).end('[id] is not a number');
     return;
@@ -87,15 +91,14 @@ app.get('/ttyt/v1/mail/:identity/:id', async (req, res) => {
 app.delete('/ttyt/v1/mail/:identity/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { identity } = req.params;
+  if (RateLimited(identity, res)) return;
   if (!Number.isInteger(id)) {
     res.status(400).end('[id] is not a number');
     return;
   }
-  if (!VerifyNonceSig(req, res, req.params.identity, false)) return;
+  if (!VerifyNonceSig(req, res, identity, false)) return;
 
-  const { count } = await prisma.mail.deleteMany({
-    where: { id },
-  });
+  const { count } = await prisma.mail.deleteMany({ where: { id } });
 
   res.status(count ? 200 : 404).end();
 });

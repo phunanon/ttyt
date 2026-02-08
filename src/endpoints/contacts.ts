@@ -1,4 +1,4 @@
-import { app, prisma, VerifyNonceSig } from '../infrastructure';
+import { app, prisma, RateLimited, VerifyNonceSig } from '../infrastructure';
 
 const ResolveIdentities = async (identity: string, contact: string) => {
   if (contact.length !== 64) {
@@ -23,6 +23,7 @@ const ResolveIdentities = async (identity: string, contact: string) => {
 
 app.put('/ttyt/v1/contacts/:owner/:contact', async (req, res) => {
   const { owner, contact } = req.params;
+  if (RateLimited(owner, res)) return;
 
   if (!(await VerifyNonceSig(req, res, owner, false))) return;
 
@@ -44,7 +45,8 @@ app.put('/ttyt/v1/contacts/:owner/:contact', async (req, res) => {
 });
 
 app.get('/ttyt/v1/contacts/:owner', async (req, res) => {
-  const owner = req.params.owner;
+  const { owner } = req.params;
+  if (RateLimited(owner, res)) return;
 
   if (!(await VerifyNonceSig(req, res, owner, false))) return;
 
@@ -58,6 +60,7 @@ app.get('/ttyt/v1/contacts/:owner', async (req, res) => {
 
 app.delete('/ttyt/v1/contacts/:owner/:contact', async (req, res) => {
   const { owner, contact } = req.params;
+  if (RateLimited(owner, res)) return;
 
   if (!(await VerifyNonceSig(req, res, owner, false))) return;
 

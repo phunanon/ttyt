@@ -4,8 +4,22 @@ import { Mail, MailMetadata } from './types';
 
 type Keys = { seckey: Seckey; pubkey: Pubkey };
 
+let lastCall = 0;
+type F = typeof fetch;
+function Fetch(...args: Parameters<F>): ReturnType<F> {
+  const now = Date.now();
+  const scheduled = Math.max(now, lastCall + 1_024);
+  lastCall = scheduled;
+  const wait = scheduled - now;
+  return new Promise<Awaited<ReturnType<F>>>((resolve, reject) => {
+    setTimeout(() => {
+      fetch(...args).then(resolve, reject);
+    }, wait);
+  });
+}
+
 export const fetchContacts = async ({ pubkey, seckey }: Keys) => {
-  const res = await fetch(`/ttyt/v1/contacts/${pubkey.hex}`, {
+  const res = await Fetch(`/ttyt/v1/contacts/${pubkey.hex}`, {
     headers: await NonceSigHeaders(seckey),
   });
   if (res.status !== 200) {
@@ -16,7 +30,7 @@ export const fetchContacts = async ({ pubkey, seckey }: Keys) => {
 };
 
 export const deleteMail = async ({ pubkey, seckey }: Keys, id: number) => {
-  const res = await fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
+  const res = await Fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
     method: 'DELETE',
     headers: await NonceSigHeaders(seckey),
   });
@@ -27,7 +41,7 @@ export const deleteMail = async ({ pubkey, seckey }: Keys, id: number) => {
 };
 
 export const deleteContact = async ({ pubkey, seckey }: Keys, id: string) => {
-  const res = await fetch(`/ttyt/v1/contacts/${pubkey.hex}/${id}`, {
+  const res = await Fetch(`/ttyt/v1/contacts/${pubkey.hex}/${id}`, {
     method: 'DELETE',
     headers: await NonceSigHeaders(seckey),
   });
@@ -38,7 +52,7 @@ export const deleteContact = async ({ pubkey, seckey }: Keys, id: string) => {
 };
 
 export const fetchAllMail = async ({ pubkey, seckey }: Keys) => {
-  const res = await fetch(`/ttyt/v1/mail/${pubkey.hex}/0/9999999999`, {
+  const res = await Fetch(`/ttyt/v1/mail/${pubkey.hex}/0/9999999999`, {
     headers: await NonceSigHeaders(seckey),
   });
   if (res.status !== 200) {
@@ -49,7 +63,7 @@ export const fetchAllMail = async ({ pubkey, seckey }: Keys) => {
 };
 
 export const fetchMailById = async ({ pubkey, seckey }: Keys, id: number) => {
-  const res = await fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
+  const res = await Fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
     headers: await NonceSigHeaders(seckey),
   });
   if (res.status !== 200) {
@@ -64,7 +78,7 @@ export const registerIdentity = async (
   nonce: string,
   nonceSig: string,
 ) => {
-  const res = await fetch(`/ttyt/v1/identity/${pubkey}`, {
+  const res = await Fetch(`/ttyt/v1/identity/${pubkey}`, {
     method: 'PUT',
     headers: { 'X-TTYT-NONCE': nonce, 'X-TTYT-NONCE-SIG': nonceSig },
   });

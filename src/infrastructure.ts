@@ -1,12 +1,15 @@
 import { PrismaClient } from './generated/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import express, { Response, Request } from 'express';
+import { CircularBuffer } from './circular-buffer';
 import * as Crypto from './crypto';
 
 const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/db.db' });
-export const prisma = new PrismaClient({adapter});
+export const prisma = new PrismaClient({ adapter });
 export const app = express();
 export const sec = () => Math.floor(Date.now() / 1_000);
+
+const nonceSigCache = new CircularBuffer(1_024);
 
 export const VerifyNonceSig = async (
   req: Request,
@@ -22,6 +25,11 @@ export const VerifyNonceSig = async (
   }
   const nonce = `${nonceHeader}`;
   const signature = `${signatureHeader}`;
+  if (nonceSigCache.has(signature)) {
+    res.status(429).end('X-TTYT-NONCE-SIG already used');
+    return false;
+  }
+  nonceSigCache.add(signature);
   if (verifyIsServerNonce && !Crypto.VerifyServerNonce(nonce)) {
     res.status(400).end('X-TTYT-NONCE invalid');
     return false;
@@ -68,6 +76,18 @@ export const VerifyBodySig = async (
   }
   return signature;
 };
+
+const identityCache = new Set<string>();
+setInterval(() => identityCache.clear(), 1_000);
+export const RateLimited = (identity: string, res: Response) => {
+  const limited = identityCache.has(identity);
+  if (limited) {
+    res.status(429).end('Identity rate limited');
+    return true;
+  }
+  identityCache.add(identity);
+  return false;
+}
 
 app.use((req, res, next) => {
   if (req.method === 'POST' && !req.is('application/json')) {

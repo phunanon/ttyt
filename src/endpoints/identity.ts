@@ -1,11 +1,11 @@
-import { app, prisma, VerifyNonceSig } from '../infrastructure';
+import { app, prisma, RateLimited, VerifyNonceSig } from '../infrastructure';
 
 app.put('/ttyt/v1/identity/:identity', async (req, res) => {
   const { identity } = req.params;
+  if (RateLimited(identity, res)) return;
 
   if (!(await VerifyNonceSig(req, res, identity))) return;
 
-  //Check if it already exists
   {
     const exists = await prisma.identity.findUnique({ where: { identity } });
     if (exists) {

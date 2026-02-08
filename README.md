@@ -94,15 +94,15 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 **IP address exposure.** Traditional email providers, when exchanging mail between servers, do not include the IP address of their account holder. However, as TTYT mail is sent by sending a request to the recipient's server directly, the server might choose to expose the sender's IP address to the recipient or others. Unlike traditional email, a user now has to trust their host server _and_ various recipient servers, rather than just one provider.
 
-**Replay attacks.** This API is not designed to mitigate replay attacks. Storing used nonces conflicts with my priority of a largely stateless server. HTTPS will mitigate most replay attack issues, and others are serious enough that I expect they would jeopardise the private key itself let alone replayed requests.
-
 **Proof-of-work.** Ideally TTYT would use a memory-hard algorithm but there isn't mature support for these in JavaScript yet; or using something useful like proof-of-space, perhaps for storing encrypted chunks of the database; or something financially beneficial to providers like mining crypto-currency; or something ethical like doing BOINC tasks if it were technically feasible. The happy-path is that you generate an identity once, and are always in the contacts of your recipients.
 
 **Silently compromised identity.** The original owner of an identity would have no way to know for sure if their private key is used maliciously. The simplest indicator could be a queryable counter of each authenticated action per identity.
 
 ### TODO:
 
-- per-identity rate limits and usage quotas (e.g. one action per second, mail retained for up to ten years, identities revoked if not authenticated for ten years)
+- per-identity rate limits (e.g. one action per second)
+- usage quotas (e.g. mail retained for up to ten years, identities revoked if not authenticated for ten years)
 - don't leak unhandled exceptions
 - consider base36 or base64 identities/aliases
 - ability to choose between contacts only, server-instance only, or anonymous senders
+- investigate WebAuthn for third party minimal-clicks approach to adding to contacts
