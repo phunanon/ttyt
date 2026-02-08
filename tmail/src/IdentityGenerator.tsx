@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { WithStateProps } from './index.js';
 import { IngestSeckey } from './crypto.js';
-
+import { registerIdentity } from './api.js';
 const { max } = Math;
 
 type PoWResult = {
@@ -35,8 +35,7 @@ async function findSignature() {
       keyPair.privateKey,
       encoded
     );
-    iterations++;
-    if (iterations % 500 === 0) {
+    if (++iterations % 100 === 0) {
       self.postMessage({ iterations });
       iterations = 0;
     }
@@ -116,18 +115,9 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
   };
 
   const handleSubmit = (result: PoWResult) => async () => {
-    const res = await fetch(`/ttyt/v1/identity/${result.publicKey}`, {
-      method: 'PUT',
-      headers: {
-        'X-TTYT-NONCE': result.nonce,
-        'X-TTYT-NONCE-SIG': result.signature,
-      },
-    });
-    if (res.status === 201) {
-      set({ page: 'identified', ...(await IngestSeckey(result.pkcs8)) });
-    } else {
-      alert(`Failed to submit identity: ${res.status} ${await res.text()}`);
-    }
+    const { publicKey, nonce, signature, pkcs8 } = result;
+    const successful = await registerIdentity(publicKey, nonce, signature);
+    if (successful) set({ page: 'identified', ...(await IngestSeckey(pkcs8)) });
   };
 
   const submitButton = 'pkcs8' in progress && (

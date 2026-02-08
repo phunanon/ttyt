@@ -58,3 +58,17 @@ export const fetchMailById = async ({ pubkey, seckey }: Keys, id: number) => {
   }
   return (await res.json()) as Mail;
 };
+
+export const registerIdentity = async (
+  pubkey: string,
+  nonce: string,
+  nonceSig: string,
+) => {
+  const res = await fetch(`/ttyt/v1/identity/${pubkey}`, {
+    method: 'PUT',
+    headers: { 'X-TTYT-NONCE': nonce, 'X-TTYT-NONCE-SIG': nonceSig },
+  });
+  if (res.status === 201) return true;
+  alert(`Failed to submit identity: ${res.status} ${await res.text()}`);
+  return false;
+};
