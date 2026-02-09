@@ -9,7 +9,7 @@
         --input: #6f97cf;
         --inputting: #7fa7df;
         --act: #cfcf6f;
-        --read: #6fcf97;
+        --info: #6fcf97;
       }
       * {
         margin: 0;
@@ -101,7 +101,7 @@
         height: 1.5rem;
       }
       pre {
-        border: 2px solid var(--read);
+        border: 2px solid var(--info);
         border-radius: 0.5rem;
         white-space: pre-wrap;
       }
@@ -113,7 +113,7 @@
         border: 0;
         background-color: transparent;
         &:not(:last-child) {
-          border-bottom: 0.1rem solid var(--read);
+          border-bottom: 0.1rem solid var(--info);
         }
         &:hover,
         &.viewing {
@@ -169,6 +169,24 @@
           border-radius: 0 0.5rem 0.5rem 0;
         }
       }
+      .info-group {
+        flex-shrink: 0;
+        > span:first-child:not(:last-child) {
+          border-radius: 0.5rem 0 0 0.5rem;
+          border-left: 2px solid var(--info);
+        }
+        > span:last-child:not(:first-child) {
+          border-radius: 0 0.5rem 0.5rem 0;
+        }
+        > span {
+          padding: 0.5rem;
+          color: #fff;
+          background-color: #000;
+          border-top: 2px solid var(--info);
+          border-bottom: 2px solid var(--info);
+          border-right: 2px solid var(--info);
+        }
+      }
       .scroll {
         overflow-y: scroll;
       }
@@ -176,7 +194,7 @@
         flex-wrap: nowrap;
       }
       .time {
-        color: var(--read);
+        color: var(--info);
       }
       select#contact_list {
         color: #000;

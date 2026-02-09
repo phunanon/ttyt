@@ -18,8 +18,8 @@
     <path d="M1 16 L32 36 L63 16 Z" fill="#a6a8ac"/>
 
     <!-- Inner folds -->
-    <path d="M0 52 L26 34" stroke="#a6a8ac" stroke-width="2"/>
-    <path d="M63 52 L38 34" stroke="#a6a8ac" stroke-width="2"/>
+    <path d="M0 52 L26 34" stroke="#a6a8ac" stroke-width="3"/>
+    <path d="M63 52 L38 34" stroke="#a6a8ac" stroke-width="3"/>
   </g>
 
   <!-- Capital T -->

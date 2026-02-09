@@ -62,7 +62,10 @@ export const fetchAllMail = async ({ pubkey, seckey }: Keys) => {
   return (await res.json()) as MailMetadata[];
 };
 
+const mailCache = new Map<number, Mail>();
 export const fetchMailById = async ({ pubkey, seckey }: Keys, id: number) => {
+  const cached = mailCache.get(id);
+  if (cached) return cached;
   const res = await Fetch(`/ttyt/v1/mail/${pubkey.hex}/${id}`, {
     headers: await NonceSigHeaders(seckey),
   });
@@ -70,7 +73,9 @@ export const fetchMailById = async ({ pubkey, seckey }: Keys, id: number) => {
     alert('Failed to fetch mail: ' + (await res.text()));
     return;
   }
-  return (await res.json()) as Mail;
+  const mail = (await res.json()) as Mail;
+  mailCache.set(id, mail);
+  return mail;
 };
 
 export const registerIdentity = async (

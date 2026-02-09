@@ -20,7 +20,7 @@ export const VerifyNonceSig = async (
   const nonceHeader = req.headers['x-ttyt-nonce'];
   const signatureHeader = req.headers['x-ttyt-nonce-sig'];
   if (!nonceHeader || !signatureHeader) {
-    res.status(400).end('X-TTYT-NONCE or X-TTYT-NONCE-SIG missing');
+    res.status(402).end('X-TTYT-NONCE or X-TTYT-NONCE-SIG missing');
     return false;
   }
   const nonce = `${nonceHeader}`;

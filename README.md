@@ -26,12 +26,16 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 ### Glossary
 
 - **Identity.** An Ed25519 public key.
-- **User authentication.** Request must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers.
+- **User authentication.** Request must include these headers:
   - `X-TTYT-NONCE`: a user-generated nonce
   - `X-TTYT-NONCE-SIG`: the signature of the nonce using the relevant public key
-- **Proof-of-work.** Request must include `X-TTYT-NONCE` and `X-TTYT-NONCE-SIG` headers.
+- **Registration proof-of-work.** Request must include these headers:
   - `X-TTYT-NONCE`: a server-generated nonce
-  - `X-TTYT-NONCE-SIG`: must satisfy `Math.clz32(sign(pubkey, nonce)) > 12`, where `pubkey` is the relevant identity and `nonce` is `X-TTYT-NONCE`.
+  - `X-TTYT-NONCE-SIG`: must satisfy `Math.clz32(sign(pubkey, X-TTYT-NONCE)) > 12`, where `pubkey` is the relevant identity
+- **Mail proof-of-work.** Request must include these headers:
+  - `X-TTYT-NONCE`: a server-generated nonce
+  - `X-TTYT-PUBKEY`: a user-generated public key
+  - `X-TTYT-NONCE-SIG`: must satisfy `Math.clz32(sign(X-TTYT-PUBKEY, X-TTYT-NONCE)) > 12`
 
 ### Endpoints
 
@@ -46,12 +50,12 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
   - Headers: **User authentication**
 - [x] `PUT /ttyt/v1/identity/[identity]`: register a new identity
   - Successful response is a server-granted alias
-  - Headers: **Proof-of-work** for `[identity]`
+  - Headers: **Register proof-of-work** for `[identity]`
 - [x] `PUT /ttyt/v1/mail/[sender]/[recipient]`: send mail
   - `[sender]` is the identity of the sender
   - `[recipient]` is the identity or server-granted alias of the recipient
   - Header: `X-TTYT-BODY-SIG`, the request body signed by the `[sender]` public key
-  - Headers if `[sender]` is not in the contacts of `[recipient]`: **Proof-of-work** for `[sender]`
+  - Headers if `[sender]` is not in the contacts of `[recipient]`: **Mail proof-of-work** for `[sender]`
   - `[sender]` must be registered with the server instance if not in the contacts of `[recipient]`
 - [x] `PUT /ttyt/v1/contacts/[identity]/[contact]`: add `[contact]` identity to contacts
   - Headers: **User authentication**

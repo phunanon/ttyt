@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { WithStateProps } from './index.js';
 import { IngestSeckey } from './crypto.js';
 import { registerIdentity } from './api.js';
-const { max } = Math;
+const { max, floor } = Math;
 
 type PoWResult = {
   nonce: string;
@@ -63,7 +63,7 @@ findSignature();`;
   let totalIterations = 0;
   let timer = setInterval(() => {
     handleProgress({ totalIterations, elapsedMs: Date.now() - startedAt });
-  }, 1_000);
+  }, 500);
 
   return await new Promise(resolve => {
     function HandleWorkerMessage(e: MessageEvent) {
@@ -128,7 +128,14 @@ const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
   );
   return (
     <div class="column gap-1">
-      <pre>{JSON.stringify(progress, null, 2)}</pre>
+      {'pkcs8' in progress ? (
+        <pre>{JSON.stringify(progress, null, 2)}</pre>
+      ) : (
+        <div class="info-group">
+          <span>{floor(progress.elapsedMs / 1000)} seconds</span>
+          <span>{progress.totalIterations.toLocaleString()} iterations</span>
+        </div>
+      )}
       {submitButton}
     </div>
   );
