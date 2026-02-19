@@ -1,6 +1,7 @@
-import { BottomPanelView } from '../types';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
+import { BottomPanelView } from '../types';
+import { SidebarState } from '../Sidebar';
 
 type SetterArg<T> = T | ((value: T) => T);
 
@@ -13,8 +14,10 @@ export type Contacts = {
 type ViewStore = {
   bottom: BottomPanelView;
   contacts: Contacts;
+  sidebar?: SidebarState;
   setBottom: (view: SetterArg<BottomPanelView>) => void;
   setContacts: (contacts: Contacts) => void;
+  setSidebar: (sidebar?: SidebarState) => void;
   evictContact: (identity: string) => void;
 };
 
@@ -38,6 +41,7 @@ export const useViewStore = createWithEqualityFn<ViewStore>()(
           contact => contact.identity !== identity,
         ),
       }),
+    setSidebar: sidebar => set({ sidebar }),
   }),
   shallow,
 );

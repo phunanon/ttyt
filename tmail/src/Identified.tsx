@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'preact/hooks';
 import { WithStateProps } from './index.js';
-import { BodySigHeaders, NonceSigHeaders } from './crypto.js';
+import { NonceSigHeaders } from './crypto.js';
 import { useViewStore } from './hooks/useViewStore.js';
 import { Mail, MailMetadata } from './types.js';
 import { deleteContact, deleteMail, fetchContacts } from './api.js';
 import { fetchMailById, fetchAllMail } from './api.js';
 import { useCheckList } from './hooks/useCheckList.js';
+import { Composer, ComposerProps } from './Composer.js';
+import { Header } from './Header.js';
 
 const A = (sec: number) =>
   new Intl.DateTimeFormat('en-GB', {
@@ -22,7 +24,7 @@ const R = (sec: number) => {
 
 type MailboxListProps = WithStateProps<'identified'>;
 const MailboxList = ({ state }: MailboxListProps) => {
-  const { selected, evict, handleSelect } = useCheckList<number>();
+  const { selected, evict, handleSelect, toggleAll } = useCheckList<number>();
   const viewingId = useViewStore(x =>
     x.bottom.view === 'mail' ? x.bottom.mail.id : undefined,
   );
@@ -32,7 +34,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
   const [mailbox, setMailbox] = useState<Mailbox>();
 
   const fetchMail = async () => {
-    const mail = await fetchAllMail(state);
+    const mail = await fetchAllMail(state.identity);
     if (mail) setMailbox({ retrieved: new Date(), mail });
   };
   useEffect(() => void fetchMail(), []);
@@ -42,7 +44,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
     const confirmed = confirm(`Delete ${selected.length} mail?`);
     if (!confirmed) return;
     for (const id of selected) {
-      const ok = await deleteMail(state, id);
+      const ok = await deleteMail(state.identity, id);
       if (!ok) continue;
       evict(id);
       setMailbox(box => {
@@ -56,32 +58,39 @@ const MailboxList = ({ state }: MailboxListProps) => {
     return <div class="fill p-1">Loading mailbox...</div>;
   }
 
-  const buttons = [
-    selected.length ? (
-      <button class="sm" onClick={handleDelete}>
-        🗑️
-      </button>
-    ) : null,
-  ].filter(x => !!x);
+  const headerButtons = (
+    <>
+      <span class="btn-group">
+        <button onClick={() => setView({ view: 'contacts' })}>Contacts</button>
+        <button onClick={fetchMail}>Refresh</button>
+      </span>
+      {!!selected.length && (
+        <>
+          <button class="sm" onClick={handleDelete}>
+            🗑️
+          </button>
+          <div class="row gap-05">
+            <input
+              type="checkbox"
+              onClick={toggleAll(mailbox.mail.map(x => x.id))}
+              checked={selected.length === mailbox.mail.length}
+            />
+            All
+          </div>
+        </>
+      )}
+    </>
+  );
+  const headerAfter = (
+    <span class="time">
+      {mailbox.mail.length} mail retrieved at{' '}
+      {mailbox.retrieved.toLocaleTimeString()}
+    </span>
+  );
 
   return (
     <div class="fill column scroll">
-      <div class="row gap-05 space-between align-items-center p-05">
-        <div class="row gap-1 align-items-center">
-          <h1 style={{ marginLeft: '0.5rem' }}>tmail</h1>
-          <span class="btn-group">
-            <button onClick={() => setView({ view: 'contacts' })}>
-              Contacts
-            </button>
-            <button onClick={fetchMail}>Refresh</button>
-          </span>
-          {!!buttons.length && <span class="btn-group">{buttons}</span>}
-        </div>
-        <span class="time">
-          {mailbox.mail.length} mail retrieved at{' '}
-          {mailbox.retrieved.toLocaleTimeString()}
-        </span>
-      </div>
+      <Header buttons={headerButtons} after={headerAfter} />
       <div class="column">
         {mailbox.mail.length === 0 && <div class="m-1">No mail.</div>}
         {mailbox.mail.map(m => {
@@ -108,72 +117,6 @@ const MailboxList = ({ state }: MailboxListProps) => {
           );
         })}
       </div>
-    </div>
-  );
-};
-
-type ComposerProps = WithStateProps<'identified'> & { to?: string };
-const Composer = ({ state, ...props }: ComposerProps) => {
-  const contacts = useViewStore(x => x.contacts);
-  const [to, setTo] = useState(props.to ?? '');
-  const [body, setBody] = useState('');
-
-  const handleSend = async () => {
-    const res = await fetch(`/ttyt/v1/mail/${state.pubkey.hex}/${to}`, {
-      method: 'PUT',
-      headers: await BodySigHeaders(state.seckey, body),
-      body,
-    });
-    alert(`${res.status}: ${await res.text()}`);
-  };
-
-  return (
-    <div class="column gap-05 fill">
-      <div class="row gap-05">
-        <input
-          id="recipient_identity"
-          class="fill"
-          placeholder="Recipient alias / identity"
-          value={to}
-          onChange={e => setTo(e.currentTarget.value)}
-        />
-        <div style={{ position: 'relative', display: 'flex' }}>
-          <select
-            id="contact_list"
-            onChange={({ target }) => {
-              if (!target) return;
-              setTo((target as HTMLSelectElement).value);
-            }}
-            style={{ appearance: 'none', width: '2rem' }}
-          >
-            <option></option>
-            {contacts.map(contact => (
-              <option value={contact.alias}>
-                {contact.alias} {contact.identity.slice(contact.alias.length)}
-              </option>
-            ))}
-          </select>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{}}>👥</div>
-          </div>
-        </div>
-        <button onClick={handleSend}>Send</button>
-      </div>
-      <textarea
-        placeholder="Mail body"
-        value={body}
-        onChange={e => setBody(e.currentTarget.value)}
-        class="fill"
-      />
     </div>
   );
 };
@@ -225,11 +168,12 @@ const Contact = ({ you, contact, className, ...props }: ContactProps) => {
 
 type ViewerProps = WithStateProps<'identified'> & { view: MailMetadata };
 const Viewer = ({ state, view }: ViewerProps) => {
+  const { identity } = state;
   const [mail, setMail] = useState<Mail>();
 
   useEffect(() => {
     const fetchMail = async () => {
-      const mail = await fetchMailById(state, view.id);
+      const mail = await fetchMailById(identity, view.id);
       if (mail) setMail(mail);
     };
     fetchMail();
@@ -240,7 +184,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
     <div class="column fill gap-05">
       <div class="row gap-05 space-between align-items-center">
         <Contact
-          you={state.pubkey.hex}
+          you={identity.pubkey.hex}
           contact={{ identity: view.identity, alias: view.alias }}
           full
         />
@@ -253,6 +197,7 @@ const Viewer = ({ state, view }: ViewerProps) => {
 
 type ContactsEditorProps = WithStateProps<'identified'> & {};
 const ContactsEditor = ({ state }: ContactsEditorProps) => {
+  const { identity } = state;
   const { contacts, setContacts, evictContact } = useViewStore(x => ({
     contacts: x.contacts,
     setContacts: x.setContacts,
@@ -264,28 +209,28 @@ const ContactsEditor = ({ state }: ContactsEditorProps) => {
     const contact = prompt('Enter contact alias / identity');
     if (!contact) return;
     const res = await fetch(
-      `/ttyt/v1/contacts/${state.pubkey.hex}/${contact}`,
+      `/ttyt/v1/contacts/${identity.pubkey.hex}/${contact}`,
       {
         method: 'PUT',
-        headers: await NonceSigHeaders(state.seckey),
+        headers: await NonceSigHeaders(identity.seckey),
       },
     );
     if (res.status !== 201) {
       alert('Failed to add to contacts: ' + (await res.text()));
       return;
     }
-    const contacts = await fetchContacts(state);
+    const contacts = await fetchContacts(identity);
     if (contacts) setContacts(contacts);
   };
 
   const handleDelete = async () => {
     const confirmed = confirm(`Delete ${selected.length} contact(s)?`);
     if (!confirmed) return;
-    for (const identity of selected) {
-      const ok = await deleteContact(state, identity);
+    for (const id of selected) {
+      const ok = await deleteContact(identity, id);
       if (!ok) continue;
-      evict(identity);
-      evictContact(identity);
+      evict(id);
+      evictContact(id);
     }
   };
 
@@ -304,7 +249,12 @@ const ContactsEditor = ({ state }: ContactsEditorProps) => {
         onClick={handleSelect(contact.identity)}
         checked={selected.includes(contact.identity)}
       />
-      <Contact you={state.pubkey.hex} contact={contact} className="fill" full />
+      <Contact
+        you={identity.pubkey.hex}
+        contact={contact}
+        className="fill"
+        full
+      />
       {new Date(contact.addedSec * 1_000).toLocaleString()}
     </div>
   ));
@@ -334,7 +284,7 @@ export const Identified = (props: WithStateProps<'identified'>) => {
 
   useEffect(() => {
     async function fetchAsync() {
-      const contacts = await fetchContacts(props.state);
+      const contacts = await fetchContacts(props.state.identity);
       if (contacts) setContacts(contacts);
     }
     fetchAsync();

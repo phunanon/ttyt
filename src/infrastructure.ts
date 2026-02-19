@@ -14,13 +14,18 @@ const nonceSigCache = new CircularBuffer(1_024);
 export const VerifyNonceSig = async (
   req: Request,
   res: Response,
-  pubkey: string,
+  pubkey?: string,
   verifyIsServerNonce = true,
 ) => {
+  const publicKeyHeader = req.headers['x-ttyt-pubkey'];
   const nonceHeader = req.headers['x-ttyt-nonce'];
   const signatureHeader = req.headers['x-ttyt-nonce-sig'];
   if (!nonceHeader || !signatureHeader) {
     res.status(402).end('X-TTYT-NONCE or X-TTYT-NONCE-SIG missing');
+    return false;
+  }
+  if (!pubkey && !publicKeyHeader) {
+    res.status(400).end('X-TTYT-PUBKEY missing');
     return false;
   }
   const nonce = `${nonceHeader}`;
@@ -34,7 +39,8 @@ export const VerifyNonceSig = async (
     res.status(400).end('X-TTYT-NONCE invalid');
     return false;
   }
-  const sigStatus = await Crypto.CheckEd25519Sig(pubkey, nonce, signature);
+  const sigpubkey = pubkey ?? `${publicKeyHeader}`;
+  const sigStatus = await Crypto.CheckEd25519Sig(sigpubkey, nonce, signature);
   if (sigStatus.sig_error) {
     res.status(400).end(`X-TTYT-NONCE-SIG error: ${sigStatus.sig_error}`);
     return false;

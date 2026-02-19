@@ -1,23 +1,82 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
-import { IdentityGenerator } from './IdentityGenerator.js';
+import { Register } from './Register.js';
 import { Identified } from './Identified.js';
+import { Anonymous } from './Anonymous.js';
 import { IngestSeckey } from './crypto.js';
+import { useViewStore } from './hooks/useViewStore.js';
+import { Sidebar } from './Sidebar.js';
 
 export type State =
   | { page: 'greeter' }
+  | { page: 'register' }
   | { page: 'generate' }
-  | { page: 'identified'; seckey: Seckey; pubkey: Pubkey };
+  | { page: 'anonymous'; identity: Keys; pkcs8Hex: string }
+  | { page: 'identified'; identity: Keys };
 export type WithStateProps<T extends State['page']> = {
   state: Extract<State, { page: T }>;
   set: (s: State) => void;
 };
 
-const Greeter = ({ set }: WithStateProps<'greeter'>) => {
+type PkInputProps = { id: string; onSubmit: (pk: string) => Promise<void> };
+const PkInput = ({ id, onSubmit }: PkInputProps) => {
   const [typedPk, setTypedPk] = useState('');
-  const onSubmitPk = async (pkHex: string) => {
+  return (
+    <div class="row input-group">
+      <input
+        id={id}
+        type="password"
+        class="fill"
+        placeholder="Ed25519 private key (hex)"
+        style={{ padding: '0.5rem', fontSize: '1rem' }}
+        autofocus
+        value={typedPk}
+        onInput={e => setTypedPk(e.currentTarget.value)}
+        onKeyDown={e => e.key === 'Enter' && onSubmit(typedPk)}
+      />
+      <button onClick={() => onSubmit(typedPk)}>➡️</button>
+    </div>
+  );
+};
+
+const Greeter = ({ set }: WithStateProps<'greeter'>) => {
+  const ingestRegistered = async (pkHex: string) => {
     set({ page: 'identified', ...(await IngestSeckey(pkHex)) });
   };
+  const ingestAnonymous = async (pkcs8Hex: string) => {
+    set({ page: 'anonymous', ...(await IngestSeckey(pkcs8Hex)), pkcs8Hex });
+  };
+  const generateAnonymous = async () => {
+    const keyPair = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, [
+      'sign',
+      'verify',
+    ]);
+    const pkcs8 = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+    const pkcs8Hex = new Uint8Array(pkcs8).toHex();
+    set({ page: 'anonymous', ...(await IngestSeckey(pkcs8Hex)), pkcs8Hex });
+  };
+
+  const instanceCard = (
+    <div class="column gap-05 card">
+      <p>Use this client for {window.location.host}</p>
+      <PkInput id="registered_pk" onSubmit={ingestRegistered} />
+      <button onClick={() => set({ page: 'register' })}>
+        Register an identity
+      </button>
+      <a href="/ttyt/v1">About this TTYT instance</a>
+    </div>
+  );
+
+  const anonCard = (
+    <div class="column gap-05 card">
+      <p>Use this client anonymously</p>
+      <PkInput id="anonymous_pk" onSubmit={ingestAnonymous} />
+      <button onClick={generateAnonymous}>
+        Generate an anonymous identity
+      </button>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -27,39 +86,26 @@ const Greeter = ({ set }: WithStateProps<'greeter'>) => {
         alignItems: 'center',
       }}
     >
-      <div class="column gap-05">
-        <div class="row input-group">
-          <input
-            type="password"
-            placeholder="Ed25519 private key"
-            style={{ padding: '0.5rem', fontSize: '1rem' }}
-            autofocus
-            value={typedPk}
-            onInput={e => setTypedPk(e.currentTarget.value)}
-            onKeyDown={e => e.key === 'Enter' && onSubmitPk(typedPk)}
-          />
-          <button onClick={() => onSubmitPk(typedPk)}>➡️</button>
-        </div>
-        <button onClick={() => set({ page: 'generate' })}>
-          Or, generate an identity
-        </button>
-        <a href="/ttyt/v1">About this TTYT instance</a>
+      <div class="column">
+        {instanceCard}
+        {anonCard}
       </div>
     </div>
   );
 };
 
 const App = () => {
-  const [state, setState] = useState<State>({ page: 'greeter' });
+  const [state, set] = useState<State>({ page: 'greeter' });
+  const sidebar = useViewStore(x => x.sidebar);
   return (
     <>
-      {state.page === 'greeter' && <Greeter state={state} set={setState} />}
-      {state.page === 'identified' && (
-        <Identified state={state} set={setState} />
-      )}
-      {state.page === 'generate' && (
-        <IdentityGenerator state={state} set={setState} />
-      )}
+      <div class={`content ${sidebar ? 'has-sidebar' : ''}`}>
+        {state.page === 'greeter' && <Greeter {...{ state, set }} />}
+        {state.page === 'identified' && <Identified {...{ state, set }} />}
+        {state.page === 'anonymous' && <Anonymous {...{ state, set }} />}
+        {state.page === 'register' && <Register {...{ state, set }} />}
+      </div>
+      {sidebar && <Sidebar state={sidebar} />}
     </>
   );
 };

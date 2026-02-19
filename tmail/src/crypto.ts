@@ -8,6 +8,7 @@ declare global {
   }
   type Seckey = { readonly seckey: CryptoKey };
   type Pubkey = { readonly pubkey: ArrayBuffer; readonly hex: string };
+  type Keys = { readonly seckey: Seckey; readonly pubkey: Pubkey };
 }
 
 export const NonceSigHeaders = async ({ seckey: key }: Seckey) => {
@@ -59,7 +60,9 @@ export const IngestSeckey = async (seckeyHex: string) => {
   const publicKeyBytes = Uint8Array.fromBase64(publicKeyBase64);
 
   return {
-    seckey: { seckey: nonExportable },
-    pubkey: { pubkey: publicKeyBytes.buffer, hex: publicKeyBytes.toHex() },
+    identity: {
+      seckey: { seckey: nonExportable },
+      pubkey: { pubkey: publicKeyBytes.buffer, hex: publicKeyBytes.toHex() },
+    },
   };
 };

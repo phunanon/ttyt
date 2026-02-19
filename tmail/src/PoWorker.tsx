@@ -1,16 +1,17 @@
+import { JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import { WithStateProps } from './index.js';
-import { IngestSeckey } from './crypto.js';
-import { registerIdentity } from './api.js';
 const { max, floor } = Math;
 
-type PoWResult = {
+export type PoWResult = {
   nonce: string;
   pkcs8: string;
   publicKey: string;
   signature: string;
 };
-type Progress = { totalIterations: number; elapsedMs: number } | PoWResult;
+type Progress = { totalIterations: number; elapsedMs: number } & (
+  | {}
+  | PoWResult
+);
 
 async function PoW(
   nonce: string,
@@ -74,14 +75,11 @@ findSignature();`;
       workers.forEach(w => w.terminate());
       clearInterval(timer);
       const { pkcs8, publicKey, signature } = e.data;
-      //TODO: replace with Uint8Array.toHex
-      const toHex = (arr: number[]) =>
-        arr.map(b => b.toString(16).padStart(2, '0')).join('');
       resolve({
         nonce,
-        pkcs8: toHex(pkcs8),
-        publicKey: toHex(publicKey),
-        signature: toHex(signature),
+        pkcs8: new Uint8Array(pkcs8).toHex(),
+        publicKey: new Uint8Array(publicKey).toHex(),
+        signature: new Uint8Array(signature).toHex(),
       });
     }
 
@@ -94,77 +92,40 @@ findSignature();`;
   });
 }
 
-type ProgressPanelProps = {
-  progress: Progress;
-  set: WithStateProps<'generate'>['set'];
+type WorkerProps = {
+  children: (result: false | PoWResult) => JSX.Element;
+  onResult?: (result: PoWResult) => void;
 };
 
-const ProgressPanel = ({ progress, set }: ProgressPanelProps) => {
-  const download = (result: PoWResult) => async () => {
-    const blob = new Blob([JSON.stringify(result, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const ref = prompt('Reference');
-    a.download = `tmail-${result.publicKey.slice(0, 8)}-${ref}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    a.remove();
-  };
-
-  const handleSubmit = (result: PoWResult) => async () => {
-    const { publicKey, nonce, signature, pkcs8 } = result;
-    const successful = await registerIdentity(publicKey, nonce, signature);
-    if (successful) set({ page: 'identified', ...(await IngestSeckey(pkcs8)) });
-  };
-
-  const submitButton = 'pkcs8' in progress && (
-    <>
-      <button onClick={download(progress)}>Download identity</button>
-      <button onClick={handleSubmit(progress)}>Submit identity</button>
-    </>
-  );
-  return (
-    <div class="column gap-1">
-      {'pkcs8' in progress ? (
-        <pre>{JSON.stringify(progress, null, 2)}</pre>
-      ) : (
-        <div class="info-group">
-          <span>{floor(progress.elapsedMs / 1000)} seconds</span>
-          <span>{progress.totalIterations.toLocaleString()} iterations</span>
-        </div>
-      )}
-      {submitButton}
-    </div>
-  );
-};
-
-export const IdentityGenerator = ({ set }: WithStateProps<'generate'>) => {
+export const PoWorker = ({ children, onResult }: WorkerProps) => {
   const [progress, setProgress] = useState<Progress>();
 
   const handleStart = async () => {
     setProgress({ totalIterations: 0, elapsedMs: 0 });
     const nonce = await fetch(`/ttyt/v1/nonce`).then(res => res.text());
     const result = await PoW(nonce, 12, setProgress);
-    setProgress(result);
+    setProgress(progress => ({
+      ...(progress ?? { totalIterations: 0, elapsedMs: 0 }),
+      ...result,
+    }));
+    onResult?.(result);
   };
 
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      {progress ? (
-        <ProgressPanel progress={progress} set={set} />
-      ) : (
-        <button onClick={handleStart}>Start work</button>
-      )}
+  return progress ? (
+    <div class="column gap-1">
+      <div class="info-group">
+        <span>
+          {'pkcs8' in progress ? 'Completed in ' : ''}
+          {floor(progress.elapsedMs / 1000)} seconds
+        </span>
+        <span>{progress.totalIterations.toLocaleString()} iterations</span>
+      </div>
+      {'pkcs8' in progress && children(progress)}
     </div>
+  ) : (
+    <>
+      {children(false)}
+      <button onClick={handleStart}>Start work</button>
+    </>
   );
 };

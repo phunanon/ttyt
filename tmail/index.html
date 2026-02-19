@@ -170,21 +170,24 @@
         }
       }
       .info-group {
+        display: flex;
+        flex-direction: column;
         flex-shrink: 0;
+        margin: 0.5rem 0;
         > span:first-child:not(:last-child) {
-          border-radius: 0.5rem 0 0 0.5rem;
-          border-left: 2px solid var(--info);
+          border-radius: 0.5rem 0.5rem 0 0;
+          border-top: 2px solid var(--info);
         }
         > span:last-child:not(:first-child) {
-          border-radius: 0 0.5rem 0.5rem 0;
+          border-radius: 0 0 0.5rem 0.5rem;
         }
         > span {
           padding: 0.5rem;
           color: #fff;
           background-color: #000;
-          border-top: 2px solid var(--info);
-          border-bottom: 2px solid var(--info);
+          border-left: 2px solid var(--info);
           border-right: 2px solid var(--info);
+          border-bottom: 2px solid var(--info);
         }
       }
       .scroll {
@@ -199,12 +202,39 @@
       select#contact_list {
         color: #000;
       }
+      p {
+        max-width: 32rem;
+      }
       @media only screen and (max-width: 512px) {
         h1 {
           display: none;
         }
         .card {
           margin: 0;
+        }
+      }
+
+      .sidebar {
+        margin: 0;
+        padding: 0;
+        width: 16rem;
+        position: fixed;
+        right: 0;
+        height: 100%;
+        overflow: auto;
+        & .card {
+          margin-left: 0;
+        }
+      }
+      .content.has-sidebar {
+        margin-right: 16rem;
+      }
+      @media screen and (max-width: 32rem) {
+        .sidebar {
+          position: static;
+        }
+        .content {
+          margin-right: 0;
         }
       }
     </style>
@@ -223,4 +253,5 @@
   - internet contacts (xxx@xxx.xxx)
 
 - Ability to send to strangers
+- Ability to send anonymously
 -->

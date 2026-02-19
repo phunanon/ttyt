@@ -20,5 +20,10 @@ export const useCheckList = <T>() => {
     e.stopPropagation();
   };
 
-  return { selected, evict, toggle, handleSelect };
+  const toggleAll = (all: T[]) => (e: Event) => {
+    setSelected(selected => (all.length === selected.length ? [] : all));
+    e.stopPropagation();
+  };
+
+  return { selected, evict, toggle, handleSelect, toggleAll };
 };

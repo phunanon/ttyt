@@ -20,7 +20,7 @@ app.put('/ttyt/v1/mail/:from/:to', async (req, res) => {
       where: { ownerId: recipient.id, identity: from },
     });
     if (contact) return true;
-    return await VerifyNonceSig(req, res, from);
+    return await VerifyNonceSig(req, res);
   })();
   if (!passesChallenge) return;
 

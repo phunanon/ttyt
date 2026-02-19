@@ -1,8 +1,6 @@
-import { NonceSigHeaders } from './crypto';
+import { BodySigHeaders, NonceSigHeaders } from './crypto';
 import { Contacts } from './hooks/useViewStore';
 import { Mail, MailMetadata } from './types';
-
-type Keys = { seckey: Seckey; pubkey: Pubkey };
 
 let lastCall = 0;
 type F = typeof fetch;
@@ -90,4 +88,26 @@ export const registerIdentity = async (
   if (res.status === 201) return true;
   alert(`Failed to submit identity: ${res.status} ${await res.text()}`);
   return false;
+};
+
+export type NonceSigHeaders = {
+  'X-TTYT-PUBKEY': string;
+  'X-TTYT-NONCE': string;
+  'X-TTYT-NONCE-SIG': string;
+};
+export const sendMail = async (
+  { pubkey, seckey }: Keys,
+  to: string,
+  body: string,
+  nonceHeaders?: NonceSigHeaders,
+) => {
+  const bodySigHeaders = await BodySigHeaders(seckey, body);
+  const res = await fetch(`/ttyt/v1/mail/${pubkey.hex}/${to}`, {
+    method: 'PUT',
+    headers: { ...bodySigHeaders, ...nonceHeaders },
+    body,
+  });
+  if (res.status === 402) return 402;
+  alert(`${res.status}: ${await res.text()}`);
+  return res.status;
 };

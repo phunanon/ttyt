@@ -55,8 +55,8 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
   - `[sender]` is the identity of the sender
   - `[recipient]` is the identity or server-granted alias of the recipient
   - Header: `X-TTYT-BODY-SIG`, the request body signed by the `[sender]` public key
-  - Headers if `[sender]` is not in the contacts of `[recipient]`: **Mail proof-of-work** for `[sender]`
-  - `[sender]` must be registered with the server instance if not in the contacts of `[recipient]`
+  - Headers if `[sender]` is not in the contacts of `[recipient]`: **Mail proof-of-work**
+  - The `[sender]` identity does not need to be registered with the server instance
 - [x] `PUT /ttyt/v1/contacts/[identity]/[contact]`: add `[contact]` identity to contacts
   - Headers: **User authentication**
   - The `[contact]` identity does not need to be registered with the server instance
