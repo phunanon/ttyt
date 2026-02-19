@@ -12,5 +12,5 @@ sudo systemctl restart caddy
 
 sudo ufw allow 4000/tcp
 sudo ufw allow 4001/tcp
-#sudo ufw allow ssh
+sudo ufw allow ssh
 sudo ufw enable

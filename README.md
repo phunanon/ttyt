@@ -102,7 +102,26 @@ Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287
 
 **Silently compromised identity.** The original owner of an identity would have no way to know for sure if their private key is used maliciously. The simplest indicator could be a queryable counter of each authenticated action per identity.
 
-### TODO:
+## Hosting
+
+Instructions for Ubuntu / Raspberry Pi:
+
+```bash
+$ sudo apt install ufw
+$ cd scripts
+$ bash install-caddy.sh
+$ bash install-podman.sh
+$ bash install-node.sh
+$ bash install-pnpm.sh
+$ cd ..
+$ pnpm i
+$ pnpm refresh-db
+$ cd tmail
+$ pnpm build
+$ cd ..
+$ bash scripts/redeploy-container.sh
+
+## TODO:
 
 - per-identity rate limits (e.g. one action per second)
 - usage quotas (e.g. mail retained for up to ten years, identities revoked if not authenticated for ten years)

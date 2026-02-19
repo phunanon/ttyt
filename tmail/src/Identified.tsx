@@ -219,8 +219,10 @@ const ContactsEditor = ({ state }: ContactsEditorProps) => {
       alert('Failed to add to contacts: ' + (await res.text()));
       return;
     }
-    const contacts = await fetchContacts(identity);
-    if (contacts) setContacts(contacts);
+    setTimeout(async () => {
+      const contacts = await fetchContacts(identity);
+      if (contacts) setContacts(contacts);
+    }, 1_500);
   };
 
   const handleDelete = async () => {
