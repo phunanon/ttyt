@@ -69,7 +69,7 @@ const MailboxList = ({ state }: MailboxListProps) => {
           <button class="sm" onClick={handleDelete}>
             🗑️
           </button>
-          <div class="row gap-05">
+          <div class="row gap-05 align-items-center">
             <input
               type="checkbox"
               onClick={toggleAll(mailbox.mail.map(x => x.id))}
