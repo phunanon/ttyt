@@ -114,10 +114,11 @@ app.delete('/ttyt/v1/mail/:identity/:id', async (req, res) => {
 });
 
 function getFirstLine(str: string) {
-  for (let i = 0; i < str.length && i < 256; i++) {
+  const max = 256;
+  for (let i = 0; i < str.length && i < max; i++) {
     const c = str[i];
     if (c === '\n') return str.slice(0, i);
     if (c === '\r' && str[i + 1] === '\n') return str.slice(0, i);
   }
-  return str;
+  return str.slice(0, max);
 }

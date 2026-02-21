@@ -123,7 +123,6 @@ $ bash scripts/redeploy-container.sh
 
 ## TODO:
 
-- per-identity rate limits (e.g. one action per second)
 - usage quotas (e.g. mail retained for up to ten years, identities revoked if not authenticated for ten years)
 - don't leak unhandled exceptions
 - consider base36 or base64 identities/aliases

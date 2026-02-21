@@ -105,7 +105,10 @@ const MailboxList = ({ state }: MailboxListProps) => {
                   onClick={handleSelect(m.id)}
                   checked={selected.includes(m.id)}
                 />
-                <span class="row gap-1 align-items-center no-wrap">
+                <span
+                  class="row gap-1 align-items-center no-wrap"
+                  style={{ minWidth: 0 }}
+                >
                   <span style={{ minWidth: '5.5rem', textAlign: 'left' }}>
                     <Identity contact={m} len={8} full />
                   </span>
