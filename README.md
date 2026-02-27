@@ -19,7 +19,7 @@ TTYT is a HTTPS server API offering at least these features:
 - Read mail sent to your identity
 - Clear mail sent to your identity
 
-Due to its design, I'm not hesitant to say you can send tmail to me at `xxx@7287425.xyz`
+Due to its design, I'm not hesitant to say you can send tmail to me on [7287425.xyz](https://7287425.xyz) at `0`.
 
 ## API
 
@@ -120,11 +120,10 @@ $ cd tmail
 $ pnpm build
 $ cd ..
 $ bash scripts/redeploy-container.sh
+```
 
 ## TODO:
 
 - usage quotas (e.g. mail retained for up to ten years, identities revoked if not authenticated for ten years)
 - don't leak unhandled exceptions
-- consider base36 or base64 identities/aliases
-- ability to choose between contacts only, server-instance only, or anonymous senders
 - investigate WebAuthn for third party minimal-clicks approach to adding to contacts
